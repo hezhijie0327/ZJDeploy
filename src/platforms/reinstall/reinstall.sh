@@ -101,7 +101,7 @@ PrepareReinstallCredentials() {
         REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
         REINSTALL_CREDENTIALS_MODE="password"
     else
-        REINSTALL_PASSWORD=$(head -c 16 /dev/urandom | base64 | tr -d '=+/' | head -c 16)
+        REINSTALL_PASSWORD=$(MintRandomPassword)
         REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
         REINSTALL_CREDENTIALS_MODE="generated-password"
         LogWarn "no REINSTALL_PASSWORD given; generated: ${REINSTALL_PASSWORD} (store it now - it is shown only this once)"

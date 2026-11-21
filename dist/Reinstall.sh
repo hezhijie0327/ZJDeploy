@@ -123,11 +123,13 @@ BackupPath() {
 }
 
 # MintRandomPassword
-# 32 hex characters from /dev/urandom (od reads exactly 16 bytes, so no
-# SIGPIPE games under pipefail). Linux-only; used when a password knob is
-# left empty.
+# 16 alphanumeric characters (~95 bits) from /dev/urandom: 16 bytes base64
+# encoded, padding and +/ stripped, truncated to 16 (head reads the pipe
+# fully fed by head -c, so no SIGPIPE games under pipefail). Same shape as
+# the reinstall entry script's password. Linux-only; used when a password
+# knob is left empty.
 MintRandomPassword() {
-    od -An -N16 -tx1 /dev/urandom | tr -d ' \n'
+    head -c 16 /dev/urandom | base64 | tr -d '=+/' | head -c 16
 }
 
 WarnDefaultPassword() {
@@ -349,7 +351,7 @@ PrepareReinstallCredentials() {
         REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
         REINSTALL_CREDENTIALS_MODE="password"
     else
-        REINSTALL_PASSWORD=$(head -c 16 /dev/urandom | base64 | tr -d '=+/' | head -c 16)
+        REINSTALL_PASSWORD=$(MintRandomPassword)
         REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
         REINSTALL_CREDENTIALS_MODE="generated-password"
         LogWarn "no REINSTALL_PASSWORD given; generated: ${REINSTALL_PASSWORD} (store it now - it is shown only this once)"
