@@ -105,7 +105,7 @@ PrepareReinstallCredentials() {
         REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
         REINSTALL_CREDENTIALS_MODE="generated-password"
         RecordCredential REINSTALL_PASSWORD "$REINSTALL_PASSWORD"
-        LogWarn "no REINSTALL_PASSWORD given; generated: ${REINSTALL_PASSWORD} (stored in ${ZJDEPLOY_CREDENTIALS_FILE})"
+        LogWarn "no REINSTALL_PASSWORD given; generated: ${REINSTALL_PASSWORD} (stored in ${ZJDEPLOY_STATE_DIR}/credentials.txt)"
     fi
 }
 

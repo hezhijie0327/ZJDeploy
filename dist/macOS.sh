@@ -167,8 +167,8 @@ LogWarn() {
 
 Die() {
     printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
-    if [ -f "$ZJDEPLOY_CREDENTIALS_FILE" ]; then
-        printf '[ZJDeploy] NOTE: credentials minted so far are in %s\n' "$ZJDEPLOY_CREDENTIALS_FILE" >&2
+    if [ -f "$ZJDEPLOY_STATE_DIR/credentials.txt" ]; then
+        printf '[ZJDeploy] NOTE: credentials minted so far are in %s\n' "$ZJDEPLOY_STATE_DIR/credentials.txt" >&2
     fi
     exit 1
 }
@@ -201,18 +201,16 @@ BackupPath() {
     fi
 }
 
-# ZJDEPLOY_CREDENTIALS_FILE
-# Minted passwords are appended here (0600) so a mid-run failure can never
-# lose them; env-overridable.
-ZJDEPLOY_CREDENTIALS_FILE="${ZJDEPLOY_CREDENTIALS_FILE:-/root/zjdeploy-credentials.txt}"
-
 # RecordCredential
-# Append one name=value credential to the credentials file. Debian-family
-# platforms only (runs as root); unused on DSM/macOS.
+# Append one name=value credential to credentials.txt inside the state
+# directory (0600), next to `state` - minted passwords survive a mid-run
+# failure. Debian-family platforms only (runs as root); unused on
+# DSM/macOS.
 RecordCredential() {
     local name="$1" value="$2"
-    printf '%s=%s\n' "$name" "$value" >> "$ZJDEPLOY_CREDENTIALS_FILE"
-    chmod 600 "$ZJDEPLOY_CREDENTIALS_FILE" 2> /dev/null || true
+    mkdir -p "$ZJDEPLOY_STATE_DIR"
+    printf '%s=%s\n' "$name" "$value" >> "$ZJDEPLOY_STATE_DIR/credentials.txt"
+    chmod 600 "$ZJDEPLOY_STATE_DIR/credentials.txt" 2> /dev/null || true
 }
 
 # MintRandomPassword
