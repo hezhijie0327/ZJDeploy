@@ -1262,7 +1262,12 @@ ConfigureSysctl() {
         ${icmp_echo[@]+"${icmp_echo[@]}"}
     )
     mkdir -p /etc/sysctl.d
-    if [ ! -f /etc/sysctl.d/99-sysctl.conf ]; then
+    # The distro ships /etc/sysctl.d/99-sysctl.conf as a symlink to
+    # /etc/sysctl.conf; resolute dropped the target, leaving a broken link
+    # that fails -f and would block ours. Clear it, and only recreate it
+    # while the target actually exists.
+    rm -f /etc/sysctl.d/99-sysctl.conf
+    if [ -f /etc/sysctl.conf ]; then
         ln -s /etc/sysctl.conf /etc/sysctl.d/99-sysctl.conf
     fi
     {
