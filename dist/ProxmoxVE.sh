@@ -227,6 +227,9 @@ LogWarn() {
 
 Die() {
     printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
+    if [ -f "$ZJDEPLOY_CREDENTIALS_FILE" ]; then
+        printf '[ZJDeploy] NOTE: credentials minted so far are in %s\n' "$ZJDEPLOY_CREDENTIALS_FILE" >&2
+    fi
     exit 1
 }
 
@@ -256,6 +259,20 @@ BackupPath() {
         mv "$target" "$backup"
         LogInfo "backed up ${target} -> ${backup}"
     fi
+}
+
+# ZJDEPLOY_CREDENTIALS_FILE
+# Minted passwords are appended here (0600) so a mid-run failure can never
+# lose them; env-overridable.
+ZJDEPLOY_CREDENTIALS_FILE="${ZJDEPLOY_CREDENTIALS_FILE:-/root/zjdeploy-credentials.txt}"
+
+# RecordCredential
+# Append one name=value credential to the credentials file. Debian-family
+# platforms only (runs as root); unused on DSM/macOS.
+RecordCredential() {
+    local name="$1" value="$2"
+    printf '%s=%s\n' "$name" "$value" >> "$ZJDEPLOY_CREDENTIALS_FILE"
+    chmod 600 "$ZJDEPLOY_CREDENTIALS_FILE" 2> /dev/null || true
 }
 
 # MintRandomPassword
@@ -1228,7 +1245,17 @@ ConfigureSysctl() {
             printf 'net.ipv6.conf.%s.use_tempaddr = 0\n' "$iface"
         done
     } | sort -u > /etc/sysctl.d/99-zjdeploy.conf
-    sysctl --system
+    # Keys the running kernel does not support (a missing qdisc or
+    # congestion module) must not abort the deployment - every other key
+    # still applies, and the rejects are logged for review.
+    local sysctl_errors
+    sysctl_errors=$(sysctl --system 2>&1 > /dev/null) || true
+    if [ -n "$sysctl_errors" ]; then
+        LogWarn "sysctl rejected some keys:"
+        printf '%s\n' "$sysctl_errors" | while IFS= read -r err; do
+            LogWarn "  ${err}"
+        done
+    fi
 }
 
 ConfigureTuned() {
@@ -1646,6 +1673,7 @@ ConfigureDefaultUser() {
         DEFAULT_PASSWORD=$(MintRandomPassword)
         LogWarn "DEFAULT_PASSWORD was empty: generated a random one - note it down (override via env on re-runs)"
         LogInfo "default user password: ${DEFAULT_PASSWORD}"
+        RecordCredential DEFAULT_PASSWORD "$DEFAULT_PASSWORD"
     fi
     PURGE_OTHER_USERS="${PURGE_OTHER_USERS:-true}"
     if [ "$PURGE_OTHER_USERS" = "true" ]; then
@@ -1707,6 +1735,7 @@ ConfigureRootUser() {
         ROOT_PASSWORD=$(MintRandomPassword)
         LogWarn "ROOT_PASSWORD was empty: generated a random one - note it down (override via env on re-runs)"
         LogInfo "root password: ${ROOT_PASSWORD}"
+        RecordCredential ROOT_PASSWORD "$ROOT_PASSWORD"
     fi
     printf 'root:%s\n' "$ROOT_PASSWORD" | chpasswd
     if [ "$LOCK_ROOT" = "true" ]; then

@@ -11,6 +11,7 @@ ConfigureDefaultUser() {
         DEFAULT_PASSWORD=$(MintRandomPassword)
         LogWarn "DEFAULT_PASSWORD was empty: generated a random one - note it down (override via env on re-runs)"
         LogInfo "default user password: ${DEFAULT_PASSWORD}"
+        RecordCredential DEFAULT_PASSWORD "$DEFAULT_PASSWORD"
     fi
     PURGE_OTHER_USERS="${PURGE_OTHER_USERS:-true}"
     if [ "$PURGE_OTHER_USERS" = "true" ]; then
@@ -72,6 +73,7 @@ ConfigureRootUser() {
         ROOT_PASSWORD=$(MintRandomPassword)
         LogWarn "ROOT_PASSWORD was empty: generated a random one - note it down (override via env on re-runs)"
         LogInfo "root password: ${ROOT_PASSWORD}"
+        RecordCredential ROOT_PASSWORD "$ROOT_PASSWORD"
     fi
     printf 'root:%s\n' "$ROOT_PASSWORD" | chpasswd
     if [ "$LOCK_ROOT" = "true" ]; then

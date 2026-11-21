@@ -91,6 +91,9 @@ LogWarn() {
 
 Die() {
     printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
+    if [ -f "$ZJDEPLOY_CREDENTIALS_FILE" ]; then
+        printf '[ZJDeploy] NOTE: credentials minted so far are in %s\n' "$ZJDEPLOY_CREDENTIALS_FILE" >&2
+    fi
     exit 1
 }
 
@@ -120,6 +123,20 @@ BackupPath() {
         mv "$target" "$backup"
         LogInfo "backed up ${target} -> ${backup}"
     fi
+}
+
+# ZJDEPLOY_CREDENTIALS_FILE
+# Minted passwords are appended here (0600) so a mid-run failure can never
+# lose them; env-overridable.
+ZJDEPLOY_CREDENTIALS_FILE="${ZJDEPLOY_CREDENTIALS_FILE:-/root/zjdeploy-credentials.txt}"
+
+# RecordCredential
+# Append one name=value credential to the credentials file. Debian-family
+# platforms only (runs as root); unused on DSM/macOS.
+RecordCredential() {
+    local name="$1" value="$2"
+    printf '%s=%s\n' "$name" "$value" >> "$ZJDEPLOY_CREDENTIALS_FILE"
+    chmod 600 "$ZJDEPLOY_CREDENTIALS_FILE" 2> /dev/null || true
 }
 
 # MintRandomPassword
@@ -354,7 +371,8 @@ PrepareReinstallCredentials() {
         REINSTALL_PASSWORD=$(MintRandomPassword)
         REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
         REINSTALL_CREDENTIALS_MODE="generated-password"
-        LogWarn "no REINSTALL_PASSWORD given; generated: ${REINSTALL_PASSWORD} (store it now - it is shown only this once)"
+        RecordCredential REINSTALL_PASSWORD "$REINSTALL_PASSWORD"
+        LogWarn "no REINSTALL_PASSWORD given; generated: ${REINSTALL_PASSWORD} (stored in ${ZJDEPLOY_CREDENTIALS_FILE})"
     fi
 }
 

@@ -108,7 +108,17 @@ ConfigureSysctl() {
             printf 'net.ipv6.conf.%s.use_tempaddr = 0\n' "$iface"
         done
     } | sort -u > /etc/sysctl.d/99-zjdeploy.conf
-    sysctl --system
+    # Keys the running kernel does not support (a missing qdisc or
+    # congestion module) must not abort the deployment - every other key
+    # still applies, and the rejects are logged for review.
+    local sysctl_errors
+    sysctl_errors=$(sysctl --system 2>&1 > /dev/null) || true
+    if [ -n "$sysctl_errors" ]; then
+        LogWarn "sysctl rejected some keys:"
+        printf '%s\n' "$sysctl_errors" | while IFS= read -r err; do
+            LogWarn "  ${err}"
+        done
+    fi
 }
 
 ConfigureTuned() {
