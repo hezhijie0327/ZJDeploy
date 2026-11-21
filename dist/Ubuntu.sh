@@ -755,7 +755,12 @@ ConfigureAPT() {
         esac
         printf 'Package: *\nPin: release a=%s\nPin-Priority: %s\n\n' "$release" "$priority" >> /etc/apt/preferences
     done
-    apt modernize-sources
+    # Convert .list sources to the deb822 .sources format. The subcommand
+    # prompts "Rewrite N sources?" reading stdin (DEBIAN_FRONTEND does not
+    # cover it, and under curl | sudo bash stdin is the script pipe), so
+    # feed an explicit "y"; older apt releases lack the subcommand, which
+    # is fine - the .list files keep working.
+    printf 'y\n' | apt modernize-sources 2> /dev/null || true
     rm -f /etc/apt/sources.list.bak /etc/apt/sources.list.d/*.bak
 }
 
