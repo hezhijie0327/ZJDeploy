@@ -8,6 +8,7 @@
 ## How to get and use?
 # curl "https://source.zhijie.online/ZJDeploy/main/dist/Reinstall.sh" | sudo bash
 # wget -qO- "https://source.zhijie.online/ZJDeploy/main/dist/Reinstall.sh" | sudo bash
+ZJDEPLOY_STATE_ID="reinstall" # resume state namespace (injected by build.sh)
 # ============================================================================
 # Configuration - shared across all platforms
 # Common knobs shared by every generated script. Platform config files add
@@ -254,7 +255,9 @@ SetGHProxyDomain() {
 # unfinished step. ZJDEPLOY_FORCE=true clears the state and re-runs everything.
 # Platform must set: ZJDEPLOY_STATE_DIR, ZJDEPLOY_STEP_TOTAL.
 GetStateFile() {
-    printf '%s/state\n' "$ZJDEPLOY_STATE_DIR"
+    # Namespaced per script: deployment and reinstall runs on the same
+    # host must never read each other's step lists.
+    printf '%s/state-%s\n' "$ZJDEPLOY_STATE_DIR" "${ZJDEPLOY_STATE_ID:-main}"
 }
 
 StepDone() {
@@ -285,6 +288,8 @@ RenderProgress() {
         LogInfo "$label"
         return 0
     fi
+    # Clamp: a polluted or foreign state file must not render 53/6 (883%).
+    [ "$completed" -le "$total" ] || completed="$total"
     percent=$((completed * 100 / total))
     filled=$((completed * width / total))
     bar="$(printf '%*s' "$filled" '' | tr ' ' '#')$(printf '%*s' "$((width - filled))" '' | tr ' ' '-')"

@@ -17,6 +17,10 @@ mkdir -p dist
 BuildScript() {
     local output="$1" usage="$2"
     shift 2
+    # Script identity for the resume state namespace, derived from the
+    # output name - single source (here), no per-config duplication.
+    local state_id
+    state_id=$(basename "$output" .sh | tr '[:upper:]' '[:lower:]')
     {
         printf '%s\n' \
             '#!/bin/bash' \
@@ -28,6 +32,7 @@ BuildScript() {
             '#' \
             '## How to get and use?'
         printf '%s\n' "$usage"
+        printf 'ZJDEPLOY_STATE_ID="%s" # resume state namespace (injected by build.sh)\n' "$state_id"
         cat "$@"
     } > "$output"
     chmod +x "$output"

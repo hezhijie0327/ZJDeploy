@@ -23,7 +23,7 @@
 - **系统优化**：BBR、sysctl 调优、ZRAM swap、chrony 时间同步、XanMod 内核（按 CPU psABI 级别选择）
 - **一键重装**：`Reinstall.sh` 备好 Alpine 安装环境与一次性 GRUB 引导项，重启即重装为全新 Ubuntu（云镜像复制安装，保留原网络配置）
 - **可重复执行**：已有密钥和配置自动备份为 `*.bak.<时间戳>`，不会直接覆盖
-- **断点续跑**：每个步骤成功后记录到 `~/.zjdeploy/state`，中断后重跑自动跳过已完成步骤；`ZJDEPLOY_FORCE=true` 全部重来
+- **断点续跑**：每个步骤成功后记录到 `~/.zjdeploy/state-<脚本名>`（各脚本互不干扰），中断后重跑自动跳过已完成步骤；`ZJDEPLOY_FORCE=true` 全部重来
 - **进度可视**：每步打印 `[####----------------] 10/52 (19%) running ConfigureChrony` 进度条（Ubuntu 52 步 / PVE 50 步 / macOS 16 步 / DSM 10 步）
 - **顶部集中配置**：每个脚本开头是 Configuration 块，凭据 / 开关 / 网络 / 软件包列表一处可调
 - **批量装包**：依赖一次性批量安装（apt / brew），省去逐包重复解析，装机与重跑更快
