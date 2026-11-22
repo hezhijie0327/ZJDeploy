@@ -1262,6 +1262,10 @@ ConfigureSysctl() {
         ${icmp_echo[@]+"${icmp_echo[@]}"}
     )
     mkdir -p /etc/sysctl.d
+    # The cloud image ships 99-cloudimg-ipv6.conf for its own nic naming;
+    # our 99-zjdeploy.conf already covers those ipv6 keys per interface,
+    # so the leftover is removed instead of left to coexist.
+    rm -f /etc/sysctl.d/99-cloudimg-ipv6.conf
     # The distro ships /etc/sysctl.d/99-sysctl.conf as a symlink to
     # /etc/sysctl.conf; resolute dropped the target, leaving a broken link
     # that fails -f and would block ours. Clear it, and only recreate it
