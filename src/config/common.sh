@@ -7,10 +7,6 @@
 ## Resume / progress
 # State lives under the running user's home. ZJDEPLOY_FORCE=true re-runs all.
 ZJDEPLOY_STATE_DIR="${ZJDEPLOY_STATE_DIR:-${HOME}/.zjdeploy}"
-# Console verbosity: debug (default) shows everything live - LogDebug
-# lines and captured command output; info keeps the console to the
-# step/warning lines. The run log file always records both regardless.
-ZJDEPLOY_LOG_LEVEL="${ZJDEPLOY_LOG_LEVEL:-debug}"
 ZJDEPLOY_FORCE="${ZJDEPLOY_FORCE:-false}"
 
 ## Credentials

@@ -27,20 +27,11 @@ LogInfo() {
     LogFile "$*"
 }
 
-# Detail lines: always recorded in the run log, shown on the console only
-# under ZJDEPLOY_LOG_LEVEL=debug.
-LogDebug() {
-    LogFile "DEBUG: $*"
-    if [ "${ZJDEPLOY_LOG_LEVEL:-info}" = "debug" ]; then
-        printf '[ZJDeploy] %s\n' "$*"
-    fi
-}
-
 # RunLogged
-# Runs a command with stdout+stderr captured: the console stays clean at
-# info level (the full output prints under debug), while the run log
-# always gets it indented between begin/end markers with the exit status.
-# The command's exit status propagates.
+# Runs a command with stdout+stderr captured into the run log (indented
+# between begin/end markers with the exit status); the console stays on
+# the step lines - tail -f the current run log to watch live. The
+# command's exit status propagates.
 RunLogged() {
     local output status
     output=$( { "$@"; } 2>&1 ) && status=0 || status=$?
@@ -50,9 +41,6 @@ RunLogged() {
             printf '%s\n' "$output" | sed 's/^/    /' >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
         fi
         LogFile "---- end: $* (exit ${status}) ----"
-    fi
-    if [ "${ZJDEPLOY_LOG_LEVEL:-info}" = "debug" ] && [ -n "$output" ]; then
-        printf '%s\n' "$output"
     fi
     return "$status"
 }
