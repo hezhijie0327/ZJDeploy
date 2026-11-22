@@ -272,20 +272,22 @@ RenderSummary() {
     fi
     LogSeparator
     LogInfo "reinstall prepared: Ubuntu ${REINSTALL_RELEASE} (${UBUNTU_CODENAME}) on ${REINSTALL_DISK}"
-    LogInfo "new hostname: ${REINSTALL_HOSTNAME}"
-    LogInfo "login: root"
-    if [ "$REINSTALL_CREDENTIALS_MODE" = "generated-password" ]; then
-        LogInfo "password (generated): ${REINSTALL_PASSWORD}"
-    elif [ "$REINSTALL_CREDENTIALS_MODE" = "password" ]; then
-        LogInfo "password: the value you passed in REINSTALL_PASSWORD"
-    else
-        LogInfo "password: locked (key-only login)"
-    fi
+    # Fixed-width labels keep every value in one column.
+    summary_kv() {
+        LogInfo "$(printf '%-16s %s' "$1:" "$2")"
+    }
+    summary_kv "new hostname" "${REINSTALL_HOSTNAME} (random)"
+    summary_kv "login" "root"
+    case "$REINSTALL_CREDENTIALS_MODE" in
+        generated-password) summary_kv "password" "${REINSTALL_PASSWORD} (generated)" ;;
+        password) summary_kv "password" "the value you passed in REINSTALL_PASSWORD" ;;
+        *) summary_kv "password" "locked (key-only login)" ;;
+    esac
     if [ -n "$SSH_KEYS_CONTENT" ]; then
-        LogInfo "ssh keys: installed to /root/.ssh/authorized_keys"
+        summary_kv "ssh keys" "installed to /root/.ssh/authorized_keys"
     fi
-    LogInfo "network: ${MGMT_IPV4:-dhcp4} on ${MGMT_IFACE} (mac ${MGMT_MAC})"
-    LogInfo "reboot now with: reboot"
+    summary_kv "network" "${MGMT_IPV4:-dhcp4} on ${MGMT_IFACE} (mac ${MGMT_MAC})"
+    summary_kv "reboot" "reboot"
     LogSeparator
 }
 
