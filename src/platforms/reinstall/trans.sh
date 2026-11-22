@@ -276,7 +276,7 @@ attach_and_probe_image() {
     modprobe vfat 2> /dev/null || true
     qemu-nbd -c /dev/nbd0 /installer/cloud.qcow2 || die "qemu-nbd failed"
     sleep 1
-    partprobe /dev/nbd0
+    partprobe /dev/nbd0 || die "partprobe failed on the attached image"
     img_root_part=""
     img_boot_part=""
     img_efi_part=""
@@ -323,8 +323,8 @@ format_and_copy() {
         mount "$esp_part" /os/boot/efi || die "cannot mount the ESP"
         if [ -n "$img_efi_part" ]; then
             mkdir -p /img
-            mount -o ro "$img_efi_part" /img
-            cp -a /img/. /os/boot/efi/
+            mount -o ro "$img_efi_part" /img || die "cannot mount the image esp"
+            cp -a /img/. /os/boot/efi/ || die "esp copy failed"
             umount /img
         fi
         # Without the image's signed grub the ESP stays empty and the
