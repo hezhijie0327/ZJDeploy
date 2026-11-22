@@ -82,11 +82,15 @@ RenderAccessSummary() {
     LogSeparator
     LogInfo "access summary"
     LogSeparator
-    LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
-    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${lock_root_status}"
-    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
-    LogInfo "credentials file: ${cred_file}"
-    LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"
+    # Fixed-width labels keep every value in one column.
+    summary_kv() {
+        LogInfo "$(printf '%-17s %s' "$1:" "$2")"
+    }
+    summary_kv "ssh" "ssh -p ${ssh_port} root@${ip}"
+    summary_kv "root" "password ${root_pw:-<unknown - see ${cred_file}>}${lock_root_status}"
+    summary_kv "${DEFAULT_USERNAME}" "password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
+    summary_kv "credentials file" "${cred_file}"
+    summary_kv "run logs" "${ZJDEPLOY_STATE_DIR}/logs/"
     LogSeparator
 }
 

@@ -198,13 +198,11 @@ RunLogged() {
     local output status
     output=$( { "$@"; } 2>&1 ) && status=0 || status=$?
     if [ -n "${ZJDEPLOY_LOG_FILE:-}" ]; then
-        {
-            printf '    ---- begin: %s ----\n' "$*"
-            if [ -n "$output" ]; then
-                printf '%s\n' "$output" | sed 's/^/    /'
-            fi
-            printf '    ---- end: %s (exit %s) ----\n' "$*" "$status"
-        } >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+        LogFile "---- begin: $* ----"
+        if [ -n "$output" ]; then
+            printf '%s\n' "$output" | sed 's/^/    /' >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+        fi
+        LogFile "---- end: $* (exit ${status}) ----"
     fi
     if [ "${ZJDEPLOY_LOG_LEVEL:-info}" = "debug" ] && [ -n "$output" ]; then
         printf '%s\n' "$output"

@@ -258,13 +258,11 @@ RunLogged() {
     local output status
     output=$( { "$@"; } 2>&1 ) && status=0 || status=$?
     if [ -n "${ZJDEPLOY_LOG_FILE:-}" ]; then
-        {
-            printf '    ---- begin: %s ----\n' "$*"
-            if [ -n "$output" ]; then
-                printf '%s\n' "$output" | sed 's/^/    /'
-            fi
-            printf '    ---- end: %s (exit %s) ----\n' "$*" "$status"
-        } >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+        LogFile "---- begin: $* ----"
+        if [ -n "$output" ]; then
+            printf '%s\n' "$output" | sed 's/^/    /' >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+        fi
+        LogFile "---- end: $* (exit ${status}) ----"
     fi
     if [ "${ZJDEPLOY_LOG_LEVEL:-info}" = "debug" ] && [ -n "$output" ]; then
         printf '%s\n' "$output"
@@ -1823,11 +1821,15 @@ RenderAccessSummary() {
     LogSeparator
     LogInfo "access summary"
     LogSeparator
-    LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
-    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${lock_root_status}"
-    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
-    LogInfo "credentials file: ${cred_file}"
-    LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"
+    # Fixed-width labels keep every value in one column.
+    summary_kv() {
+        LogInfo "$(printf '%-17s %s' "$1:" "$2")"
+    }
+    summary_kv "ssh" "ssh -p ${ssh_port} root@${ip}"
+    summary_kv "root" "password ${root_pw:-<unknown - see ${cred_file}>}${lock_root_status}"
+    summary_kv "${DEFAULT_USERNAME}" "password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
+    summary_kv "credentials file" "${cred_file}"
+    summary_kv "run logs" "${ZJDEPLOY_STATE_DIR}/logs/"
     LogSeparator
 }
 
