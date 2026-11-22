@@ -1163,7 +1163,7 @@ ConfigureModules() {
         ${MODULE_LIST_EXTRA[@]+"${MODULE_LIST_EXTRA[@]}"}
     )
     printf '%s\n' "${module_list[@]}" | sort -u > /etc/modules
-    printf '%s\n' "options kvm ignore_msrs=1 report_ignored_msrs=0" >> /etc/modprobe.d/kvm.conf
+    printf '%s\n' "options kvm ignore_msrs=1 report_ignored_msrs=0" > /etc/modprobe.d/kvm.conf
     if [ "$CPU_VENDOR_ID" = "AMD" ]; then
         printf '%s\n' "options kvm-amd nested=1" > /etc/modprobe.d/kvm-amd.conf
     elif [ "$CPU_VENDOR_ID" = "Intel" ]; then

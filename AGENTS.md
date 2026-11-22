@@ -218,6 +218,7 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 - Write config files with `printf '%s\n' "${array[@]}" > "$target"` — no temp-file round-trips
 - `rm -f` for files; `rm -rf` only for directories
 - Cleanup removes only `*.zjdeploy` temp files, never all of `/tmp`
+- **Our deploy is authoritative**: managed config files are truncated and rewritten, and stale siblings (distro symlinks, `*.bak`, cloud-image variants) are removed - never left to coexist with ours. Re-runs must stay idempotent.
 - Sensitive files 600, SSH dirs 700, private keys 400
 
 ### Gotchas
