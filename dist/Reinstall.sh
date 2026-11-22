@@ -73,6 +73,10 @@ REINSTALL_BOOT_MODE="${REINSTALL_BOOT_MODE:-auto}"
 
 ## Installer bootstrap (Alpine netboot files run the install after reboot)
 REINSTALL_CONFHOME="${REINSTALL_CONFHOME:-https://source.zhijie.online/ZJDeploy/main/src/platforms/reinstall}" # trans.sh location
+# One mirror for both trees (alpine + ubuntu-cloud-images); http because
+# the installer clock may be unsynced (TLS would fail). NJU serves both
+# without redirects - CERNET now 302s everything to third parties.
+REINSTALL_MIRROR="${REINSTALL_MIRROR:-http://mirror.nju.edu.cn}"
 
 ## Identity of the freshly installed system
 REINSTALL_PASSWORD="${REINSTALL_PASSWORD:-}" # empty -> generate one (printed) or key-only
@@ -456,10 +460,10 @@ PrepareReinstallCredentials() {
 # Alpine netboot kernel/initrd/modloop plus the phase-2 installer script.
 DownloadInstallerFiles() {
     GetUbuntuCodename "$REINSTALL_RELEASE"
-    # China mirrors only (CERNET); http so an unsynced installer clock cannot
-    # break the download.
-    ALPINE_MIRROR="http://mirrors.cernet.edu.cn/alpine"
-    IMAGE_MIRROR="http://mirrors.cernet.edu.cn/ubuntu-cloud-images"
+    # One mirror, both trees; http so an unsynced installer clock cannot
+    # break the download (see REINSTALL_MIRROR in the config block).
+    ALPINE_MIRROR="${REINSTALL_MIRROR}/alpine"
+    IMAGE_MIRROR="${REINSTALL_MIRROR}/ubuntu-cloud-images"
     case "$OS_ARCHITECTURE" in
         amd64) ALPINE_ARCH="x86_64" ;;
         arm64) ALPINE_ARCH="aarch64" ;;

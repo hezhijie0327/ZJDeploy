@@ -375,13 +375,14 @@ chroot_configure() {
     done
     cp /etc/resolv.conf /os/etc/resolv.conf || die "cannot seed resolv.conf into the chroot"
 
-    # CN-first apt mirrors; cloud images default to upstream.
+    # CN-first apt mirrors; cloud images default to upstream. NJU serves
+    # directly - CERNET 302s every tree to third parties now.
     for sources in /os/etc/apt/sources.list /os/etc/apt/sources.list.d/*.sources /os/etc/apt/sources.list.d/*.list; do
         [ -f "$sources" ] || continue
         sed -i -E \
-            -e 's|http://[a-z.]*archive\.ubuntu\.com/ubuntu|http://mirrors.cernet.edu.cn/ubuntu|g' \
-            -e 's|http://[a-z.]*security\.ubuntu\.com/ubuntu|http://mirrors.cernet.edu.cn/ubuntu|g' \
-            -e 's|http://[a-z.]*ports\.ubuntu\.com/ubuntu-ports|http://mirrors.cernet.edu.cn/ubuntu-ports|g' \
+            -e 's|http://[a-z.]*archive\.ubuntu\.com/ubuntu|http://mirror.nju.edu.cn/ubuntu|g' \
+            -e 's|http://[a-z.]*security\.ubuntu\.com/ubuntu|http://mirror.nju.edu.cn/ubuntu|g' \
+            -e 's|http://[a-z.]*ports\.ubuntu\.com/ubuntu-ports|http://mirror.nju.edu.cn/ubuntu-ports|g' \
             "$sources"
     done
 
@@ -586,7 +587,7 @@ main() {
         arm64) apk_arch="aarch64" ;;
         *) apk_arch="x86_64" ;;
     esac
-    repo_url=$(get_extra repo "http://mirrors.cernet.edu.cn/alpine/latest-stable/main")
+    repo_url=$(get_extra repo "http://mirror.nju.edu.cn/alpine/latest-stable/main")
     printf '%s\n' "$repo_url" > /etc/apk/repositories
     # qemu-img lives in community, not main; derive the sibling repo from the
     # main URL the same way the upstream installer does.

@@ -146,6 +146,7 @@ curl "https://source.zhijie.online/ZJDeploy/main/dist/Ubuntu.sh" | sudo bash
 | `REINSTALL_RELEASE` | `26.04` | 目标 Ubuntu **LTS** 版本（`20.04` / `22.04` / `24.04` / `26.04`） |
 | `REINSTALL_PASSWORD` | 随机生成并打印 | 新系统 root 密码；留空时若检测到本机 SSH 公钥则同时安装密钥 |
 | `REINSTALL_SSH_KEYS` | 复用本机 root 公钥 | authorized_keys 内容或文件路径 |
+| `REINSTALL_MIRROR` | `http://mirror.nju.edu.cn` | 安装器镜像（需同时提供 `alpine` 与 `ubuntu-cloud-images` 两棵树，http 协议）；南大源双树直供，教育网源 CERNET 已全线 302 转发 |
 | `REINSTALL_CONFHOME` | `https://source.zhijie.online/ZJDeploy/main/src/platforms/reinstall` | phase-2 安装器脚本（trans.sh）的拉取地址 |
 | `CUSTOM_HOSTNAME` | 随机生成 | 新系统主机名；默认铸造 12 位随机 hash（绝不沿用镜像默认的 `ubuntu`），设置后使用指定值 |
 | `REINSTALL_INSTALLER_PART_SIZE_MB` | `2048` | 安装暂存分区大小 |

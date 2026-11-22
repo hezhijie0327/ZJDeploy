@@ -119,10 +119,10 @@ PrepareReinstallCredentials() {
 # Alpine netboot kernel/initrd/modloop plus the phase-2 installer script.
 DownloadInstallerFiles() {
     GetUbuntuCodename "$REINSTALL_RELEASE"
-    # China mirrors only (CERNET); http so an unsynced installer clock cannot
-    # break the download.
-    ALPINE_MIRROR="http://mirrors.cernet.edu.cn/alpine"
-    IMAGE_MIRROR="http://mirrors.cernet.edu.cn/ubuntu-cloud-images"
+    # One mirror, both trees; http so an unsynced installer clock cannot
+    # break the download (see REINSTALL_MIRROR in the config block).
+    ALPINE_MIRROR="${REINSTALL_MIRROR}/alpine"
+    IMAGE_MIRROR="${REINSTALL_MIRROR}/ubuntu-cloud-images"
     case "$OS_ARCHITECTURE" in
         amd64) ALPINE_ARCH="x86_64" ;;
         arm64) ALPINE_ARCH="aarch64" ;;

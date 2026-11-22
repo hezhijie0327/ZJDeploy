@@ -24,6 +24,10 @@ REINSTALL_BOOT_MODE="${REINSTALL_BOOT_MODE:-auto}"
 
 ## Installer bootstrap (Alpine netboot files run the install after reboot)
 REINSTALL_CONFHOME="${REINSTALL_CONFHOME:-https://source.zhijie.online/ZJDeploy/main/src/platforms/reinstall}" # trans.sh location
+# One mirror for both trees (alpine + ubuntu-cloud-images); http because
+# the installer clock may be unsynced (TLS would fail). NJU serves both
+# without redirects - CERNET now 302s everything to third parties.
+REINSTALL_MIRROR="${REINSTALL_MIRROR:-http://mirror.nju.edu.cn}"
 
 ## Identity of the freshly installed system
 REINSTALL_PASSWORD="${REINSTALL_PASSWORD:-}" # empty -> generate one (printed) or key-only

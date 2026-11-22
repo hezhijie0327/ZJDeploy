@@ -101,6 +101,7 @@ The highest-yield entry points (the grep command is the audit command):
 - **`source.zhijie.online` proxy caching**: stale trans.sh served after push — always `?t=$(date +%s)` cache-busting (or scp) when refreshing installer scripts mid-round.
 - **`find \| head` SIGPIPE**: the trailing umount behind `&&` never runs (find dies 141) — the exact cause of one stuck-mkfs round. Never put cleanup behind a pipe-fed `&&` chain.
 - **PVE VMs**: NVRAM (efidisk) persists boot entries across reinstalls — `efibootmgr` wipe+create handles it, but manual UiApp checks mislead if you forget the efidisk survives.
+- **Edu-mirror redirectors**: mirrors.cernet.edu.cn silently became a 302 farm - /alpine → USTC, /ubuntu and /ubuntu-cloud-images → NJU; busybox wget following the redirect hit a flaky USTC node returning 403 while curl-from-laptop happened to land on the healthy node (IPv6 pool has multiple hosts). Installer mirrors must point at a tree that serves BOTH alpine and ubuntu-cloud-images directly (NJU); the knob is REINSTALL_MIRROR. When a mirror 403s, suspect the redirect target, not the network.
 - **busybox vs GNU**: busybox awk chokes on some dynamic-regex forms; busybox `grep -oE`, `sort -r`, `head -c` are fine. When a sweep silently matches nothing in alpine, suspect the tool before the data.
 
 ## 7. Closing loop
