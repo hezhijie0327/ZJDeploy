@@ -97,7 +97,7 @@ ConfigureDockerEngine() {
     # DOCKER_OPTS file is ignored by the systemd unit and contradicted the
     # docker-managed iptables, so it is deliberately not written.
     printf '%s\n' "${docker_list[@]}" > /etc/docker/daemon.json
-    systemctl enable docker
+    RunLogged systemctl enable docker
     systemctl restart docker
 }
 

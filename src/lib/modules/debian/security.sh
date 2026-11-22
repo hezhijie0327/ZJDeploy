@@ -43,20 +43,20 @@ ConfigureFail2Ban() {
         printf '%s\n' "${FAIL2BAN_FILTER[@]}" > "/etc/fail2ban/filter.d/${FAIL2BAN_FILTER_NAME}.conf"
     fi
     printf '%s\n' "${FAIL2BAN_JAILS[@]}" > /etc/fail2ban/jail.d/fail2ban_default.conf
-    systemctl enable fail2ban
-    fail2ban-client reload
+    RunLogged systemctl enable fail2ban
+    RunLogged fail2ban-client reload
     sleep 5
-    fail2ban-client status
+    RunLogged fail2ban-client status
 }
 
 ConfigureCrowdSec() {
     HaveCommand cscli || return 0
     local collection
     for collection in "crowdsecurity/iptables" "crowdsecurity/linux-lpe" "crowdsecurity/linux" "crowdsecurity/sshd"; do
-        cscli collections install "$collection"
+        RunLogged cscli collections install "$collection"
     done
     systemctl restart crowdsec
-    cscli hub list
+    RunLogged cscli hub list
 }
 
 InstallCrowdSec() {
@@ -66,7 +66,7 @@ deb-src [arch=${OS_ARCHITECTURE:-amd64} signed-by=/usr/share/keyrings/crowdsec-a
     if HaveCommand cscli; then
         local bouncer
         while IFS= read -r bouncer; do
-            cscli bouncers delete "$bouncer"
+            RunLogged cscli bouncers delete "$bouncer"
         done < <(cscli bouncers list | grep 'FirewallBouncer' | awk '{print $1}' || true)
     fi
     InstallAptPackages "crowdsec" "crowdsec-firewall-bouncer-nftables"

@@ -11,7 +11,7 @@ ConfigureGPG() {
     BackupPath "$GPG_HOME"
     mkdir -p "$GPG_HOME"
     export GNUPGHOME="$GPG_HOME"
-    gpg --keyserver "$GPG_KEYSERVER" --recv "$GPG_PUBKEY" || Die "failed to receive GPG key ${GPG_PUBKEY}"
+    RunLogged gpg --keyserver "$GPG_KEYSERVER" --recv "$GPG_PUBKEY" || Die "failed to receive GPG key ${GPG_PUBKEY}"
     printf '%s:6:\n' "$GPG_PUBKEY" | gpg --import-ownertrust
     GPG_PUBKEY_ID_A=$(gpg --list-keys --keyid-format LONG | awk '/^(pub|sub)/ && /\[A\]/ {split($2, a, "/"); print a[2]}' | head -n 1)
     GPG_PUBKEY_ID_C=$(gpg --list-keys --keyid-format LONG | awk '/^(pub|sub)/ && /\[C\]/ {split($2, a, "/"); print a[2]}' | head -n 1)

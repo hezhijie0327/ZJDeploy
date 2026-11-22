@@ -97,7 +97,7 @@ ConfigurePackages() {
                 -e 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=5/g' \
                 -e '/GRUB_TIMEOUT_STYLE=/d' \
                 "/usr/share/grub/default/grub" > "/etc/default/grub"
-            update-grub
+            RunLogged update-grub
         fi
         if HaveCommand proxmox-boot-tool && [ -f "/etc/kernel/cmdline" ]; then
             if [ ! -f "/etc/kernel/cmdline.bak" ]; then
@@ -105,7 +105,7 @@ ConfigurePackages() {
             fi
             sed -E "s/boot=zfs/boot=zfs quiet security=apparmor mitigations=auto,nosmt${sfp_option}${display_option}${ENABLE_IOMMU}/g" \
                 "/etc/kernel/cmdline.bak" > "/etc/kernel/cmdline"
-            proxmox-boot-tool refresh
+            RunLogged proxmox-boot-tool refresh
         fi
     }
     ConfigureZfsModules() {
@@ -263,7 +263,7 @@ ConfigurePackages() {
         while IFS= read -r pool; do
             zfs set compression=zstd "$pool"
             zpool set autotrim=on "$pool"
-            systemctl enable --now "zfs-trim-weekly@${pool}.timer"
+            RunLogged systemctl enable --now "zfs-trim-weekly@${pool}.timer"
         done < <(zpool list -H -o name)
     }
 
@@ -396,7 +396,7 @@ ConfigureSystem() {
         if [ "$(findmnt -n -o FSTYPE / 2>/dev/null || true)" = "zfs" ]; then
             local esp
             while IFS= read -r esp; do
-                proxmox-boot-tool init "$esp" grub
+                RunLogged proxmox-boot-tool init "$esp" grub
             done < <(lsblk -nr -o NAME,FSTYPE,SIZE | grep -v '^zd' | awk '$2=="vfat" {print "/dev/"$1}' || true)
         fi
     }

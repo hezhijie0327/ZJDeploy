@@ -551,7 +551,7 @@ ConfigureGPG() {
     BackupPath "$GPG_HOME"
     mkdir -p "$GPG_HOME"
     export GNUPGHOME="$GPG_HOME"
-    gpg --keyserver "$GPG_KEYSERVER" --recv "$GPG_PUBKEY" || Die "failed to receive GPG key ${GPG_PUBKEY}"
+    RunLogged gpg --keyserver "$GPG_KEYSERVER" --recv "$GPG_PUBKEY" || Die "failed to receive GPG key ${GPG_PUBKEY}"
     printf '%s:6:\n' "$GPG_PUBKEY" | gpg --import-ownertrust
     GPG_PUBKEY_ID_A=$(gpg --list-keys --keyid-format LONG | awk '/^(pub|sub)/ && /\[A\]/ {split($2, a, "/"); print a[2]}' | head -n 1)
     GPG_PUBKEY_ID_C=$(gpg --list-keys --keyid-format LONG | awk '/^(pub|sub)/ && /\[C\]/ {split($2, a, "/"); print a[2]}' | head -n 1)
@@ -650,9 +650,9 @@ ConfigurePythonPyPI() {
 # DSA is intentionally gone: OpenSSH >= 9.8 disables it, 10.x removed it.
 GenerateSSHKeys() {
     local ssh_dir="$1" comment="$2"
-    ssh-keygen -t ecdsa -b 384 -f "${ssh_dir}/id_ecdsa" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
-    ssh-keygen -t ed25519 -f "${ssh_dir}/id_ed25519" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
-    ssh-keygen -t rsa -b 4096 -f "${ssh_dir}/id_rsa" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
+    RunLogged ssh-keygen -t ecdsa -b 384 -f "${ssh_dir}/id_ecdsa" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
+    RunLogged ssh-keygen -t ed25519 -f "${ssh_dir}/id_ed25519" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
+    RunLogged ssh-keygen -t rsa -b 4096 -f "${ssh_dir}/id_rsa" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
     chmod 400 "${ssh_dir}"/id_*
     chmod 644 "${ssh_dir}"/id_*.pub
 }
@@ -660,9 +660,9 @@ GenerateSSHKeys() {
 GenerateHostSSHKeys() {
     local ssh_dir="$1" comment="$2"
     rm -f "${ssh_dir}"/ssh_host_*
-    ssh-keygen -t ecdsa -b 384 -f "${ssh_dir}/ssh_host_ecdsa_key" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
-    ssh-keygen -t ed25519 -f "${ssh_dir}/ssh_host_ed25519_key" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
-    ssh-keygen -t rsa -b 4096 -f "${ssh_dir}/ssh_host_rsa_key" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
+    RunLogged ssh-keygen -t ecdsa -b 384 -f "${ssh_dir}/ssh_host_ecdsa_key" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
+    RunLogged ssh-keygen -t ed25519 -f "${ssh_dir}/ssh_host_ed25519_key" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
+    RunLogged ssh-keygen -t rsa -b 4096 -f "${ssh_dir}/ssh_host_rsa_key" -C "$comment" -N "${OPENSSH_PASSWORD:-}"
     chmod 400 "${ssh_dir}"/ssh_host_*
     chmod 644 "${ssh_dir}"/ssh_host_*.pub
 }
@@ -1054,7 +1054,7 @@ ConfigureDockerEngine() {
     # DOCKER_OPTS file is ignored by the systemd unit and contradicted the
     # docker-managed iptables, so it is deliberately not written.
     printf '%s\n' "${docker_list[@]}" > /etc/docker/daemon.json
-    systemctl enable docker
+    RunLogged systemctl enable docker
     systemctl restart docker
 }
 
@@ -1378,8 +1378,8 @@ ConfigureSysctl() {
 
 ConfigureTuned() {
     HaveCommand tuned-adm || return 0
-    tuned-adm profile "$(tuned-adm recommend)"
-    tuned-adm active
+    RunLogged tuned-adm profile "$(tuned-adm recommend)"
+    RunLogged tuned-adm active
 }
 
 ConfigureGAI() {
@@ -1454,20 +1454,20 @@ ConfigureFail2Ban() {
         printf '%s\n' "${FAIL2BAN_FILTER[@]}" > "/etc/fail2ban/filter.d/${FAIL2BAN_FILTER_NAME}.conf"
     fi
     printf '%s\n' "${FAIL2BAN_JAILS[@]}" > /etc/fail2ban/jail.d/fail2ban_default.conf
-    systemctl enable fail2ban
-    fail2ban-client reload
+    RunLogged systemctl enable fail2ban
+    RunLogged fail2ban-client reload
     sleep 5
-    fail2ban-client status
+    RunLogged fail2ban-client status
 }
 
 ConfigureCrowdSec() {
     HaveCommand cscli || return 0
     local collection
     for collection in "crowdsecurity/iptables" "crowdsecurity/linux-lpe" "crowdsecurity/linux" "crowdsecurity/sshd"; do
-        cscli collections install "$collection"
+        RunLogged cscli collections install "$collection"
     done
     systemctl restart crowdsec
-    cscli hub list
+    RunLogged cscli hub list
 }
 
 InstallCrowdSec() {
@@ -1477,7 +1477,7 @@ deb-src [arch=${OS_ARCHITECTURE:-amd64} signed-by=/usr/share/keyrings/crowdsec-a
     if HaveCommand cscli; then
         local bouncer
         while IFS= read -r bouncer; do
-            cscli bouncers delete "$bouncer"
+            RunLogged cscli bouncers delete "$bouncer"
         done < <(cscli bouncers list | grep 'FirewallBouncer' | awk '{print $1}' || true)
     fi
     InstallAptPackages "crowdsec" "crowdsec-firewall-bouncer-nftables"
@@ -1997,13 +1997,13 @@ ConfigurePackages() {
             printf '%s\n' "${socket_override_list[@]}" > /etc/systemd/system/cockpit.socket.d/zjdeploy.conf
             systemctl daemon-reload
         fi
-        systemctl enable --now cockpit.socket
+        RunLogged systemctl enable --now cockpit.socket
     }
     ConfigureCloudflareWARP() {
         # Get token from `https://<YOUR_TEAM_NAME>.cloudflareaccess.com/warp`
         # Login via `warp-cli registration token 'com.cloudflare.warp://<your-team-name>.cloudflareaccess.com/auth?token=<your-token>'`
         HaveCommand warp-cli || return 0
-        ufw allow in on CloudflareWARP
+        RunLogged ufw allow in on CloudflareWARP
     }
     ConfigureGrub() {
         HaveCommand update-grub || return 0
@@ -2015,7 +2015,7 @@ ConfigurePackages() {
             -e 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=5/g' \
             -e '/GRUB_TIMEOUT_STYLE=/d' \
             "/usr/share/grub/default/grub" > "/etc/default/grub"
-        update-grub
+        RunLogged update-grub
     }
     ConfigureLandscape() {
         [ -f "/usr/lib/python3/dist-packages/landscape/lib/network.py" ] || return 0
@@ -2116,17 +2116,17 @@ ConfigurePackages() {
             -e 's/MANAGE_BUILTINS=yes/MANAGE_BUILTINS=no/g' \
             -e 's/IPV6=no/IPV6=yes/g' \
             "/etc/default/ufw"
-        ufw --force reset
-        ufw allow 123/udp
-        ufw allow 161/udp
-        ufw limit ${SSH_PORT}/tcp
+        RunLogged ufw --force reset
+        RunLogged ufw allow 123/udp
+        RunLogged ufw allow 161/udp
+        RunLogged ufw limit ${SSH_PORT}/tcp
         ufw allow ${COCKPIT_PORT}/tcp # cockpit web UI
-        ufw allow 323/udp
-        ufw allow 3493/tcp
-        ufw allow 51820/udp
-        ufw allow in on wg0
-        ufw --force enable
-        ufw status verbose
+        RunLogged ufw allow 323/udp
+        RunLogged ufw allow 3493/tcp
+        RunLogged ufw allow 51820/udp
+        RunLogged ufw allow in on wg0
+        RunLogged ufw --force enable
+        RunLogged ufw status verbose
     }
     ConfigureWireGuard() {
         HaveCommand wg || return 0
@@ -2230,8 +2230,8 @@ ConfigureSystem() {
         RunLogged apt purge -qy locales
         RunLogged apt update
         RunLogged apt install -qy locales
-        locale-gen "en_US.UTF-8"
-        update-locale "en_US.UTF-8"
+        RunLogged locale-gen "en_US.UTF-8"
+        RunLogged update-locale "en_US.UTF-8"
     }
     ConfigureSWAP() {
         CreateSWAP() {

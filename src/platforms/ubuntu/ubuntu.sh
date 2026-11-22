@@ -94,13 +94,13 @@ ConfigurePackages() {
             printf '%s\n' "${socket_override_list[@]}" > /etc/systemd/system/cockpit.socket.d/zjdeploy.conf
             systemctl daemon-reload
         fi
-        systemctl enable --now cockpit.socket
+        RunLogged systemctl enable --now cockpit.socket
     }
     ConfigureCloudflareWARP() {
         # Get token from `https://<YOUR_TEAM_NAME>.cloudflareaccess.com/warp`
         # Login via `warp-cli registration token 'com.cloudflare.warp://<your-team-name>.cloudflareaccess.com/auth?token=<your-token>'`
         HaveCommand warp-cli || return 0
-        ufw allow in on CloudflareWARP
+        RunLogged ufw allow in on CloudflareWARP
     }
     ConfigureGrub() {
         HaveCommand update-grub || return 0
@@ -112,7 +112,7 @@ ConfigurePackages() {
             -e 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=5/g' \
             -e '/GRUB_TIMEOUT_STYLE=/d' \
             "/usr/share/grub/default/grub" > "/etc/default/grub"
-        update-grub
+        RunLogged update-grub
     }
     ConfigureLandscape() {
         [ -f "/usr/lib/python3/dist-packages/landscape/lib/network.py" ] || return 0
@@ -213,17 +213,17 @@ ConfigurePackages() {
             -e 's/MANAGE_BUILTINS=yes/MANAGE_BUILTINS=no/g' \
             -e 's/IPV6=no/IPV6=yes/g' \
             "/etc/default/ufw"
-        ufw --force reset
-        ufw allow 123/udp
-        ufw allow 161/udp
-        ufw limit ${SSH_PORT}/tcp
+        RunLogged ufw --force reset
+        RunLogged ufw allow 123/udp
+        RunLogged ufw allow 161/udp
+        RunLogged ufw limit ${SSH_PORT}/tcp
         ufw allow ${COCKPIT_PORT}/tcp # cockpit web UI
-        ufw allow 323/udp
-        ufw allow 3493/tcp
-        ufw allow 51820/udp
-        ufw allow in on wg0
-        ufw --force enable
-        ufw status verbose
+        RunLogged ufw allow 323/udp
+        RunLogged ufw allow 3493/tcp
+        RunLogged ufw allow 51820/udp
+        RunLogged ufw allow in on wg0
+        RunLogged ufw --force enable
+        RunLogged ufw status verbose
     }
     ConfigureWireGuard() {
         HaveCommand wg || return 0
@@ -327,8 +327,8 @@ ConfigureSystem() {
         RunLogged apt purge -qy locales
         RunLogged apt update
         RunLogged apt install -qy locales
-        locale-gen "en_US.UTF-8"
-        update-locale "en_US.UTF-8"
+        RunLogged locale-gen "en_US.UTF-8"
+        RunLogged update-locale "en_US.UTF-8"
     }
     ConfigureSWAP() {
         CreateSWAP() {

@@ -132,8 +132,8 @@ ConfigureSysctl() {
 
 ConfigureTuned() {
     HaveCommand tuned-adm || return 0
-    tuned-adm profile "$(tuned-adm recommend)"
-    tuned-adm active
+    RunLogged tuned-adm profile "$(tuned-adm recommend)"
+    RunLogged tuned-adm active
 }
 
 ConfigureGAI() {
