@@ -161,11 +161,13 @@ wait_for_upstream() {
 # into the initramfs by dist/Reinstall.sh (phase 1).
 setup_installer_ssh() {
     if [ -f /etc/configs/password ]; then
-        chpasswd -e < /etc/configs/password
+        # Same lockout class as the chroot twin: ssh is advertised with a
+        # password that silently failed to apply.
+        chpasswd -e < /etc/configs/password || die "installer password application failed"
     fi
     if [ -f /etc/configs/ssh_keys ]; then
         mkdir -p /root/.ssh
-        cp /etc/configs/ssh_keys /root/.ssh/authorized_keys
+        cp /etc/configs/ssh_keys /root/.ssh/authorized_keys || die "installer ssh keys copy failed"
         chmod 700 /root/.ssh
         chmod 600 /root/.ssh/authorized_keys
     fi

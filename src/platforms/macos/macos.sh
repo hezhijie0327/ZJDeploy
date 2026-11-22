@@ -142,7 +142,7 @@ InstallCustomPackages() {
         local app
         for app in "${app_list[@]}"; do
             if mas info "$app" > /dev/null 2>&1; then
-                if ! mas install "$app"; then
+                if ! RunLogged mas install "$app"; then
                     RunLogged mas purchase "$app" || LogWarn "mas purchase failed for ${app}"
                 fi
             fi
@@ -194,8 +194,8 @@ InstallDependencyPackages() {
 UpgradePackages() {
     RunLogged brew update
     RunLogged brew upgrade --greedy
-    mas upgrade || LogWarn "mas upgrade failed (sign in to the App Store first)"
-    sudo softwareupdate --install --all
+    RunLogged mas upgrade || LogWarn "mas upgrade failed (sign in to the App Store first)"
+    RunLogged sudo softwareupdate --install --all
 }
 
 # Cleanup Temp Files
