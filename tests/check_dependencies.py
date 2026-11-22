@@ -237,13 +237,45 @@ class Script:
         return problems
 
 
+def check_function_resolution(paths):
+    """Cross-dist resolution: a project function called in a dist script
+    must be defined in that same script (build.sh module lists decide what
+    ships). Catches the 'module function used outside its build list'
+    class the variable checks cannot see."""
+    registry = {}  # name -> set of dists defining it
+    for path in paths:
+        for name in Script(path).bodies:
+            registry.setdefault(name, set()).add(path)
+    problems = []
+    for path in paths:
+        # Strip comments: module headers legitimately document sibling
+        # function names; only executable code resolves calls.
+        code = '\n'.join(line.split('#', 1)[0]
+                          for line in open(path, errors='replace'))
+        defined = set(Script(path).bodies)
+        for name, where in sorted(registry.items()):
+            if name in defined:
+                continue
+            if re.search(r'(?<![\w./-])' + re.escape(name) + r'\b', code):
+                problems.append(
+                    f'{path}: {name}() is called here but only defined in '
+                    f'{sorted(where)} - add the module to the build.sh list '
+                    f'or inline the helper')
+    return problems
+
+
 def main():
     total = 0
-    for path in sys.argv[1:]:
+    paths = sys.argv[1:]
+    for path in paths:
         problems = Script(path).check()
         for p in problems:
             print(p)
         total += len(problems)
+    problems = check_function_resolution(paths)
+    for p in problems:
+        print(p)
+    total += len(problems)
     if total:
         print(f'\n{total} dependency-order problem(s) found')
         sys.exit(1)

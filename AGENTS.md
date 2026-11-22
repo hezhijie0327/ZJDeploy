@@ -228,7 +228,7 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 
 ### Gotchas
 - **macOS ships bash 3.2**: `lib/core.sh` and `lib/modules/*.sh` must stay 3.2-compatible — no associative arrays, no namerefs, guard empty-array expansions with `${arr[@]+"${arr[@]}"}`. `lib/modules/debian/*` targets bash 4.4+ only; `src/platforms/reinstall/trans.sh` is busybox ash only.
-- **Module composition lives in build.sh**: adding a shared function to a new platform means adding its module file to that platform's build list — lint.sh does not verify module selection, only freshness.
+- **Module composition lives in build.sh**: adding a shared function to a new platform means adding its module file to that platform's build list — the dependency checker's function-resolution pass (cross-dist) fails the build when a dist calls a project function its list does not ship.
 - **Modularity contract**: one topic per module; pure-data modules (like `hosts.sh`) are fine when the header says so; nothing dead ships — a function no platform calls belongs nowhere, and near-duplicate bodies across platforms are extraction candidates (verified by the dead-code and similarity scans in AUDIT.md §2).
 - **Generated files**: commit the regenerated `dist/` scripts together with the `src/` change; `lint.sh` enforces freshness.
 - **Step total**: when adding/removing a `RunStep` call, update `ZJDEPLOY_STEP_TOTAL` in the platform's `src/platforms/<name>/config.sh`; `lint.sh` fails on a mismatch.

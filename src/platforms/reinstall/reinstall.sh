@@ -79,8 +79,10 @@ CollectReinstallFacts() {
         ALPINE_FLAVOUR="lts"
     fi
     # A fresh machine deserves a fresh name: the cloud image default
-    # ("ubuntu") is never an identity. CUSTOM_HOSTNAME overrides.
-    REINSTALL_HOSTNAME="${CUSTOM_HOSTNAME:-$(MintRandomHostname)}"
+    # ("ubuntu") is never an identity. CUSTOM_HOSTNAME overrides. The mint
+    # is inlined (same shape as MintRandomHostname in the debian module):
+    # the reinstall build carries no module files, only core.sh.
+    REINSTALL_HOSTNAME="${CUSTOM_HOSTNAME:-$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')}"
     LogInfo "management NIC ${MGMT_IFACE} (${MGMT_IPV4:-dhcp}), disk ${REINSTALL_DISK}, alpine flavour ${ALPINE_FLAVOUR}"
     LogInfo "new hostname: ${REINSTALL_HOSTNAME}"
 }
