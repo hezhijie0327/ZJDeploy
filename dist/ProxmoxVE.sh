@@ -775,7 +775,8 @@ InstallOhMyZsh() {
     fi
 }
 # ============================================================================
-# modules/debian/apt.sh - APT configuration, batch installs and upgrades
+# modules/debian/apt.sh - APT configuration, batch installs, upgrades and
+# the weekly apt maintenance cron (ConfigureCrontab feeds the shared InstallCrontab)
 # (Ubuntu / Proxmox VE, bash 4.4+)
 # ConfigureAPT needs APT_PREFERENCES (array of "<release> <priority>").
 # InstallDependencyPackages needs DEPENDENCY_PACKAGES + MICROCODE; set
