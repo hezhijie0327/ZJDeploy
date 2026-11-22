@@ -2,7 +2,7 @@
 # Reinstall this Ubuntu machine to a fresh Ubuntu release after reboot.
 # Phase 1 (this script): collect facts, stage an Alpine netboot installer in
 # the initramfs, queue a one-time GRUB entry. The actual install runs in
-# phase 2 (src/reinstall/trans.sh) after the reboot. Only the Ubuntu family
+# phase 2 (src/platforms/reinstall/trans.sh) after the reboot. Only the Ubuntu family
 # is supported as the source system.
 
 GetUbuntuCodename() {
@@ -98,11 +98,11 @@ PrepareReinstallCredentials() {
         SSH_KEYS_CONTENT=""
     fi
     if [ -n "$REINSTALL_PASSWORD" ]; then
-        REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
+        REINSTALL_PASSWORD_HASH=$(printf '%s' "$REINSTALL_PASSWORD" | openssl passwd -6 -stdin)
         REINSTALL_CREDENTIALS_MODE="password"
     else
         REINSTALL_PASSWORD=$(MintRandomPassword)
-        REINSTALL_PASSWORD_HASH=$(openssl passwd -6 "$REINSTALL_PASSWORD")
+        REINSTALL_PASSWORD_HASH=$(printf '%s' "$REINSTALL_PASSWORD" | openssl passwd -6 -stdin)
         REINSTALL_CREDENTIALS_MODE="generated-password"
         RecordCredential REINSTALL_PASSWORD "$REINSTALL_PASSWORD"
         LogWarn "no REINSTALL_PASSWORD given; generated: ${REINSTALL_PASSWORD} (stored in ${ZJDEPLOY_STATE_DIR}/credentials.txt)"
@@ -150,6 +150,9 @@ BuildInstallerInitrd() {
     workdir="/tmp/reinstall-initrd.zjdeploy"
     rm -rf "$workdir"
     mkdir -p "$workdir"
+    # The unpacked tree and the built image both carry the password hash;
+    # keep them away from other local users until the reboot consumes them.
+    chmod 700 "$workdir"
     zcat /reinstall-initrd | cpio -idm -D "$workdir" > /dev/null 2>&1
     if [ ! -f "$workdir/init" ]; then
         Die "unexpected initramfs layout: no init script found"
@@ -180,6 +183,7 @@ BuildInstallerInitrd() {
     mv "$workdir/init.zjdeploy" "$workdir/init"
     chmod +x "$workdir/init"
     (cd "$workdir" && find . | cpio -o -H newc -R 0:0 | gzip -1) > /reinstall-initrd
+    chmod 600 /reinstall-initrd
     rm -rf "$workdir" /reinstall-trans.sh
     LogInfo "installer initramfs built with trans.sh and credentials baked in"
 }

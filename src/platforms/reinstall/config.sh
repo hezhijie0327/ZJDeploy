@@ -2,8 +2,9 @@
 # Configuration - Reinstall (Ubuntu only)
 # Knobs for the network reinstall entry script. Runs as root via sudo.
 # Override any knob via environment variable before running, e.g.:
-#   REINSTALL_RELEASE='26.04' REINSTALL_PASSWORD='...' curl \
-#     .../dist/Reinstall.sh | sudo bash
+#   curl .../dist/Reinstall.sh | sudo REINSTALL_RELEASE='26.04' REINSTALL_PASSWORD='...' bash
+# (sudo strips exported variables - the knobs must ride on the sudo bash
+# invocation itself, never on the curl side of the pipe.)
 # ============================================================================
 
 ## Resume / progress
