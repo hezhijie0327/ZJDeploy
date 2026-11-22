@@ -6,7 +6,10 @@
 # ============================================================================
 
 GenerateWireGuardConfig() {
-    local tunnel_address="10.172.$((RANDOM % 256)).$((RANDOM % 256))/32"
+    local tunnel_octet3 tunnel_octet4
+    tunnel_octet3=$(od -An -N1 -tu1 /dev/urandom | tr -d ' ')
+    tunnel_octet4=$(od -An -N1 -tu1 /dev/urandom | tr -d ' ')
+    local tunnel_address="10.172.${tunnel_octet3}.${tunnel_octet4}/32"
     local private_key public_key preshared_key
     private_key=$(wg genkey)
     public_key=$(printf '%s' "$private_key" | wg pubkey)

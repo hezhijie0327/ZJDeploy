@@ -231,7 +231,7 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 - **Internal `*.zhijie.online` names resolve to `127.0.0.1` on public DNS** (split-horizon): only the LAN DNS serves real addresses, so referencing them in public config defaults and docs (e.g. the `PROXY_URL` default) is inert off-site by design.
 - **Single quotes in generated snippets** (e.g. `plugin_upgrade_list`) are deliberate — they must not expand at generation time.
 - `pcie_acs_override` is a patched-kernel parameter; mainline kernels ignore it. Kept intentionally for homelab IOMMU grouping.
-- macOS has no `shuf`; use `$((RANDOM % 256))` for random octets.
+- macOS has no `shuf`; use `od -An -N1 -tu1 /dev/urandom` for random octets (works on macOS and Linux).
 
 ## Platform-Specific Considerations
 

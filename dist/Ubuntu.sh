@@ -617,7 +617,10 @@ InitUserSSHDir() {
 # ============================================================================
 
 GenerateWireGuardConfig() {
-    local tunnel_address="10.172.$((RANDOM % 256)).$((RANDOM % 256))/32"
+    local tunnel_octet3 tunnel_octet4
+    tunnel_octet3=$(od -An -N1 -tu1 /dev/urandom | tr -d ' ')
+    tunnel_octet4=$(od -An -N1 -tu1 /dev/urandom | tr -d ' ')
+    local tunnel_address="10.172.${tunnel_octet3}.${tunnel_octet4}/32"
     local private_key public_key preshared_key
     private_key=$(wg genkey)
     public_key=$(printf '%s' "$private_key" | wg pubkey)
@@ -1565,7 +1568,7 @@ GenerateDomain() {
 # Git-commit-hash style random hostname (12 lowercase hex chars, RFC-1123-safe)
 # for hosts where nothing is detectable or on an explicit RESET_HOSTNAME.
 MintRandomHostname() {
-    printf '%04x%04x%04x' "$RANDOM" "$RANDOM" "$RANDOM"
+    od -An -N6 -tx1 /dev/urandom | tr -d ' \n'
 }
 
 # Sets NEW_HOSTNAME (CUSTOM_HOSTNAME > hostname file > hostname command >
