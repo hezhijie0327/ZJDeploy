@@ -338,7 +338,7 @@ format_and_copy() {
         # fresh partition table does not preserve - rewrite both copies to
         # look the root up by filesystem UUID (kept verbatim above).
         if [ -z "$root_uuid" ]; then
-            log "WARNING: no root UUID detected - leaving the image grub.cfg untouched"
+            log "WARNING: no root UUID detected: leaving the image grub.cfg untouched"
         fi
         for cfg_dir in /os/boot/efi/EFI/ubuntu /os/boot/efi/EFI/BOOT; do
             if [ -n "$root_uuid" ] && [ -d "$cfg_dir" ]; then

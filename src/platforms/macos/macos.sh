@@ -120,7 +120,7 @@ ConfigureSystem() {
 # Install Custom Packages
 InstallCustomPackages() {
     InstallAppFromCask() {
-        [ "$INSTALL_APP_FROM_CASK" = "true" ] || { LogInfo "INSTALL_APP_FROM_CASK=false - skipped"; return 0; }
+        [ "$INSTALL_APP_FROM_CASK" = "true" ] || { LogInfo "INSTALL_APP_FROM_CASK=false: skipped"; return 0; }
         local app_list=("${CASK_APPS[@]}")
         HaveCommand brew || return 0
         local app available=()
@@ -136,7 +136,7 @@ InstallCustomPackages() {
         fi
     }
     InstallAppFromMAS() {
-        [ "$INSTALL_APP_FROM_MAS" = "true" ] || { LogInfo "INSTALL_APP_FROM_MAS=false - skipped"; return 0; }
+        [ "$INSTALL_APP_FROM_MAS" = "true" ] || { LogInfo "INSTALL_APP_FROM_MAS=false: skipped"; return 0; }
         local app_list=("${MAS_APPS[@]}")
         HaveCommand mas || return 0
         local app

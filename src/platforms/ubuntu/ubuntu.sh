@@ -390,13 +390,13 @@ InstallCustomPackages() {
     FRR_EXTRA_PACKAGES=("frr-rpki-rtrlib")
     SetDebianGlobals
     InstallCloudflareWARP() {
-        [ "$INSTALL_CLOUDFLARE_WARP" = "true" ] || { LogInfo "INSTALL_CLOUDFLARE_WARP=false - skipped"; return 0; }
+        [ "$INSTALL_CLOUDFLARE_WARP" = "true" ] || { LogInfo "INSTALL_CLOUDFLARE_WARP=false: skipped"; return 0; }
         InstallAptRepo "cloudflare-warp" "https://pkg.cloudflareclient.com/pubkey.gpg" \
             "deb [arch=${OS_ARCHITECTURE} signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com ${LSB_CODENAME} main"
         InstallAptPackages "cloudflare-warp"
     }
     InstallTor() {
-        [ "$INSTALL_TOR" = "true" ] || { LogInfo "INSTALL_TOR=false - skipped"; return 0; }
+        [ "$INSTALL_TOR" = "true" ] || { LogInfo "INSTALL_TOR=false: skipped"; return 0; }
         InstallAptRepo "tor" "https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc" \
             "deb [arch=${OS_ARCHITECTURE} signed-by=/usr/share/keyrings/tor-archive-keyring.gpg] https://deb.torproject.org/torproject.org stable main"
         InstallAptPackages "tor"

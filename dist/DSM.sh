@@ -626,7 +626,7 @@ ConfigurePackages() {
         fi
         pkg_name="$(dirname "$(dirname "$dockerd_conf")")"
         pkg_name="${pkg_name##*/}"
-        synopkg restart "$pkg_name" > /dev/null 2>&1 || LogWarn "restart ${pkg_name} failed - mirrors apply at the next restart"
+        synopkg restart "$pkg_name" > /dev/null 2>&1 || LogWarn "restart ${pkg_name} failed: mirrors apply at the next restart"
         LogInfo "registry mirrors set in ${dockerd_conf}"
     }
     ConfigureOpenSSH() {
@@ -721,12 +721,12 @@ ConfigurePkgSources() {
         *)
             BackupPath "$feeds_file"
             printf '[%s]\n' "$new_entries" > "$feeds_file"
-            LogWarn "unrecognized feeds content - replaced (old file backed up)"
+            LogWarn "unrecognized feeds content: replaced (old file backed up)"
             ;;
     esac
     # Best-effort catalog refresh; otherwise Package Center fetches it on the
     # next open.
-    synopkg update > /dev/null 2>&1 || LogWarn "feed refresh deferred - open Package Center once to pick up new sources"
+    synopkg update > /dev/null 2>&1 || LogWarn "feed refresh deferred: open Package Center once to pick up new sources"
     LogInfo "package sources merged into ${feeds_file}"
 }
 
@@ -739,7 +739,7 @@ InstallPkgPackages() {
         if RunLogged synopkg install_from_server "$pkg"; then
             LogInfo "package installed: ${pkg}"
         else
-            LogWarn "synopkg install_from_server ${pkg} failed - check the feed or the package id"
+            LogWarn "synopkg install_from_server ${pkg} failed: check the feed or the package id"
         fi
     done
 }

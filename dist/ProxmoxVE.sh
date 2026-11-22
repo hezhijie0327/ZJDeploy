@@ -1748,7 +1748,7 @@ SetDebianGlobals() {
 ConfigureDefaultUser() {
     if [ -z "$DEFAULT_PASSWORD" ]; then
         DEFAULT_PASSWORD=$(MintRandomPassword)
-        LogWarn "DEFAULT_PASSWORD was empty: generated a random one - note it down (override via env on re-runs)"
+        LogWarn "DEFAULT_PASSWORD was empty: generated a random one (note it down; override via env on re-runs)"
         LogInfo "default user password: ${DEFAULT_PASSWORD}"
         RecordCredential DEFAULT_PASSWORD "$DEFAULT_PASSWORD"
     fi
@@ -1845,7 +1845,7 @@ ConfigureRootUser() {
     LOCK_ROOT="${LOCK_ROOT:-false}"
     if [ -z "$ROOT_PASSWORD" ]; then
         ROOT_PASSWORD=$(MintRandomPassword)
-        LogWarn "ROOT_PASSWORD was empty: generated a random one - note it down (override via env on re-runs)"
+        LogWarn "ROOT_PASSWORD was empty: generated a random one (note it down; override via env on re-runs)"
         LogInfo "root password: ${ROOT_PASSWORD}"
         RecordCredential ROOT_PASSWORD "$ROOT_PASSWORD"
     fi
