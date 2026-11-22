@@ -33,6 +33,10 @@ The highest-yield entry points (the grep command is the audit command):
 | Partitions / boot | Any change touching partition_disk/format_and_copy/chroot_configure needs a PVE VM round before merge — GRUB one-time entry, initramfs injection and netplan replay are environment-sensitive (AGENTS.md) |
 | Credential hygiene | Passwords only via `MintRandomPassword` + `RecordCredential`; never `echo`-interpolated into process lists; 0600 on credentials.txt and run logs |
 | Branding / doc rot | `grep -rn -i 'autodeploy' .` ; AGENTS.md claims vs code (names, paths, defaults); README config table vs `src/config/*` knobs |
+| Naming conformance | PascalCase verb-noun functions (`grep -rnE '^[a-z_]+\(\) \{' src/` outside trans.sh; `grep -rn 'local [A-Z]' src/`), UPPERCASE globals, lowercase locals |
+| Log copy style | `grep -rn 'LogInfo\|LogWarn' src/ \| grep -F '" - '` must be empty: colon-only `key: value` separator, lowercase start, no trailing period, remediation in parentheses |
+| Output alignment | Every summary block routes labels through one `printf '%-*s'` helper — hand-padded columns drift with variable-width labels |
+| Modularity / dead code | Function inventory vs call sites across all five dist builds (zero dead code is the invariant); cross-platform body-similarity scan for renamed duplicates; module cohesion vs its header |
 | Step totals | `grep -c RunStep dist/<Script>.sh` vs `ZJDEPLOY_STEP_TOTAL` — lint checks it, but new steps added during a fix round get missed |
 
 ## 3. Fix process
@@ -83,6 +87,9 @@ The highest-yield entry points (the grep command is the audit command):
 | **Bashism tolerated by modern ash** | `$'\n'` works on alpine's ash ≥1.28 but breaks dash/older ash — literal `$\n` lands in the generated netplan | `dash -n` trans.sh before merge; embed real newlines or use printf |
 | **grep\|tail\|cut under pipefail** | A no-match grep returns 1 and the assignment trips the ERR trap — Die mid-summary | `\|\| true` on every fallback read of credentials.txt |
 | **Secrets in argv** | `openssl passwd "$pw"` and `snmpwalk -A` expose plaintext in /proc cmdline | stdin modes where they exist (`openssl passwd -stdin`); accepted-risk note where not (snmpwalk, localhost verification only) |
+| **Hand-padded log columns** | Labels padded with literal spaces break when a variable-width label (username) appears | One `printf '%-*s'` helper per summary block |
+| **Mixed log separators** | ` - ` and `: ` both used between fact and consequence — inconsistent reading, broken greppability | Colon-only contract (AGENTS Log copy style); audit dimension greps for ` - ` |
+| **Noun-only getters / UPPERCASE locals** | `StateFile` (no verb), `local LOCK_ROOT_STATUS` crept in during fixes | Naming dimension greps both shapes; getters get a Get prefix |
 | **World-readable staged secrets** | The initramfs carries the password hash into /tmp and / at 0644 until reboot | chmod 700/600 at creation (workdir + built image) |
 | **Slow-terminal UX reads as hang** | Silent curl/apk gave no progress for minutes | `--progress-bar` + per-file LogInfo; console mirror via `/dev/console` (openrc eats service stdout) |
 
