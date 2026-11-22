@@ -76,6 +76,7 @@ REINSTALL_CONFHOME="${REINSTALL_CONFHOME:-https://source.zhijie.online/ZJDeploy/
 ## Identity of the freshly installed system
 REINSTALL_PASSWORD="${REINSTALL_PASSWORD:-}" # empty -> generate one (printed) or key-only
 REINSTALL_SSH_KEYS="${REINSTALL_SSH_KEYS:-}" # authorized_keys content, or a file path; empty -> reuse this host's root keys
+CUSTOM_HOSTNAME="${CUSTOM_HOSTNAME:-}" # explicit hostname; empty -> mint a random 12-hex name (never the image default)
 # ============================================================================
 # core.sh - logging, error handling and the resume/progress state machine
 # Shared across all platforms (DSM / macOS / Ubuntu / Proxmox VE / Reinstall).
@@ -411,7 +412,11 @@ CollectReinstallFacts() {
     else
         ALPINE_FLAVOUR="lts"
     fi
+    # A fresh machine deserves a fresh name: the cloud image default
+    # ("ubuntu") is never an identity. CUSTOM_HOSTNAME overrides.
+    REINSTALL_HOSTNAME="${CUSTOM_HOSTNAME:-$(MintRandomHostname)}"
     LogInfo "management NIC ${MGMT_IFACE} (${MGMT_IPV4:-dhcp}), disk ${REINSTALL_DISK}, alpine flavour ${ALPINE_FLAVOUR}"
+    LogInfo "new hostname: ${REINSTALL_HOSTNAME}"
 }
 
 # PrepareReinstallCredentials
@@ -551,6 +556,7 @@ InstallBootEntry() {
     fi
     cmdline="${cmdline} extra_img=${REINSTALL_CLOUD_IMAGE}"
     cmdline="${cmdline} extra_repo=${ALPINE_REPO}"
+    cmdline="${cmdline} extra_hostname=${REINSTALL_HOSTNAME}"
     cmdline="${cmdline} extra_mac=${MGMT_MAC}"
     cmdline="${cmdline} extra_iface=${MGMT_IFACE}"
     cmdline="${cmdline} extra_disk=${MAIN_DISK_PTSIGN}"
@@ -600,6 +606,7 @@ RenderSummary() {
     fi
     LogSeparator
     LogInfo "reinstall prepared: Ubuntu ${REINSTALL_RELEASE} (${UBUNTU_CODENAME}) on ${REINSTALL_DISK}"
+    LogInfo "new hostname: ${REINSTALL_HOSTNAME}"
     LogInfo "login: root"
     if [ "$REINSTALL_CREDENTIALS_MODE" = "generated-password" ]; then
         LogInfo "password (generated): ${REINSTALL_PASSWORD}"

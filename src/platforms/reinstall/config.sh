@@ -28,3 +28,4 @@ REINSTALL_CONFHOME="${REINSTALL_CONFHOME:-https://source.zhijie.online/ZJDeploy/
 ## Identity of the freshly installed system
 REINSTALL_PASSWORD="${REINSTALL_PASSWORD:-}" # empty -> generate one (printed) or key-only
 REINSTALL_SSH_KEYS="${REINSTALL_SSH_KEYS:-}" # authorized_keys content, or a file path; empty -> reuse this host's root keys
+CUSTOM_HOSTNAME="${CUSTOM_HOSTNAME:-}" # explicit hostname; empty -> mint a random 12-hex name (never the image default)

@@ -147,11 +147,12 @@ curl "https://source.zhijie.online/ZJDeploy/main/dist/Ubuntu.sh" | sudo bash
 | `REINSTALL_PASSWORD` | 随机生成并打印 | 新系统 root 密码；留空时若检测到本机 SSH 公钥则同时安装密钥 |
 | `REINSTALL_SSH_KEYS` | 复用本机 root 公钥 | authorized_keys 内容或文件路径 |
 | `REINSTALL_CONFHOME` | `https://source.zhijie.online/ZJDeploy/main/src/platforms/reinstall` | phase-2 安装器脚本（trans.sh）的拉取地址 |
+| `CUSTOM_HOSTNAME` | 随机生成 | 新系统主机名；默认铸造 12 位随机 hash（绝不沿用镜像默认的 `ubuntu`），设置后使用指定值 |
 | `REINSTALL_INSTALLER_PART_SIZE_MB` | `2048` | 安装暂存分区大小 |
 | `REINSTALL_CANCEL` | `false` | `true` 时撤销已 staged 的重装：清除一次性 GRUB 引导项、删除安装文件并重置状态，然后退出 |
 | `REINSTALL_BOOT_MODE` | `auto` | 目标系统引导方式：`auto` 跟随源系统；`efi` / `bios` 强制指定。**BIOS 转 EFI 需固件支持 UEFI**，且 CSM 启动下安装器写不了 NVRAM，重装后需手动进固件切换 UEFI 启动 |
 
-流程：脚本在本机备好 Alpine netboot 内核与安装器（写入 initramfs），注册一次性 GRUB 引导项；重启后自动分区、下载 Ubuntu 云镜像并复制安装、按原网卡 MAC 还原网络配置、写入密码 / 密钥并禁用 cloud-init。**目标磁盘会被清空**，需 Ubuntu/Debian 系源系统（apt + GRUB 引导）。重装完成后建议再跑一次 `dist/Ubuntu.sh` 完成完整配置。
+流程：脚本在本机备好 Alpine netboot 内核与安装器（写入 initramfs），注册一次性 GRUB 引导项；重启后自动分区、下载 Ubuntu 云镜像并复制安装、按原网卡 MAC 还原网络配置、写入密码 / 密钥与新主机名（随机）并禁用 cloud-init。**目标磁盘会被清空**，需 Ubuntu/Debian 系源系统（apt + GRUB 引导）。重装完成后建议再跑一次 `dist/Ubuntu.sh` 完成完整配置。
 
 安装期间可通过 SSH（root，凭据与最终系统相同）连入安装器查看进度：日志实时写入安装器内的 `/root/.zjdeploy/installer.log`（失败时留有 `/root/.zjdeploy/installer.fail` 标记），装坏也能进 SSH 手动排查。
 

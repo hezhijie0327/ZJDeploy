@@ -281,6 +281,7 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 - All installer-phase mirrors use http, not https: the Alpine RAM system may boot with an unsynced clock, which breaks TLS certificate validation
 - The netplan written into the new system matches the NIC by MAC address and re-applies the previous IPv4/IPv6 addressing
 - The installer starts dropbear (same credentials as the final system, from the baked-in /configs) and tees its log to /root/.zjdeploy/installer.log (/root/.zjdeploy/installer.fail marks a failed run) so the install can be watched or repaired over ssh; the CANCEL abort stays console-only
+- The new system gets a fresh identity: a minted 12-hex hostname (`CUSTOM_HOSTNAME` overrides; never the image default "ubuntu") plus cleaned machine-id/host keys; the later deployment run then detects and keeps that name
 - Cloud-init is disabled (`/etc/cloud/cloud-init.disabled`); run the matching deployment script after the first boot for full ZJDeploy configuration
 - Requires a real-machine test round before trusting: GRUB one-time entry, initramfs init injection, and netplan replay are environment-sensitive
 

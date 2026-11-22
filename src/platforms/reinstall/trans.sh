@@ -10,6 +10,8 @@
 # Kernel cmdline contract (set by dist/Reinstall.sh):
 #   extra_img=      Ubuntu server cloud image (.img, qcow2) URL
 #   extra_repo=     Alpine main repository URL (apk packages)
+#   extra_hostname= hostname written into the new system (never the
+#                   image default "ubuntu")
 #   extra_mac=      management NIC MAC (replayed into netplan)
 #   extra_iface=    management NIC name (kept via netplan set-name)
 #   extra_ipv4=     current IPv4 as addr/prefix; missing -> dhcp4
@@ -417,6 +419,14 @@ chroot_configure() {
 
     # Fresh machine identity: no cloud-init, no stale host keys or ids.
     [ -d /os/etc/cloud ] && touch /os/etc/cloud/cloud-init.disabled
+    new_hostname=$(get_extra hostname "")
+    if [ -n "$new_hostname" ]; then
+        printf '%s
+' "$new_hostname" > /os/etc/hostname || die "cannot write the hostname"
+        sed -i '/^127\.0\.1\.1/d' /os/etc/hosts
+        printf '%s\n' "127.0.1.1 ${new_hostname}" >> /os/etc/hosts || die "cannot write the hosts entry"
+        log "hostname set to ${new_hostname}"
+    fi
     : > /os/etc/machine-id
     rm -f /os/var/lib/dbus/machine-id /os/etc/ssh/ssh_host_*
     # resolute's cloud image no longer ships openssh-server, and the host
