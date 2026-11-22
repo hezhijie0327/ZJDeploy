@@ -336,4 +336,5 @@ curl "https://source.zhijie.online/ZJDeploy/main/dist/SCRIPT.sh" | sudo bash
 ## Key Docs
 
 - [README.md](README.md) - Chinese user-facing overview and configuration reference
+- [AUDIT.md](AUDIT.md) - reusable audit playbook with the root-cause pattern table (read §5 before fixing anything)
 - [LICENSE](LICENSE) - Apache 2.0 with Commons Clause v1.0

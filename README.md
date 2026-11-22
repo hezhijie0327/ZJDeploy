@@ -178,6 +178,7 @@ bash tests/run_tests.sh # 纯函数单元测试
 ## 文档
 
 - [AGENTS.md](AGENTS.md) - 架构、约定与编码代理指南（英文）
+- [AUDIT.md](AUDIT.md) - 审计 playbook 与根因模式表（英文，修复前先查 §5）
 
 ## License
 
