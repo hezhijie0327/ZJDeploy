@@ -29,24 +29,24 @@ GetSystemInformation() {
 # Set Repository Mirror
 SetRepositoryMirror() {
     local mirror_list=(
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian-security ${LSB_CODENAME}-security contrib main non-free non-free-firmware"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME} contrib main non-free non-free-firmware"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-backports contrib main non-free non-free-firmware"
-        "# deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-backports-sloppy contrib main non-free non-free-firmware"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-proposed-updates contrib main non-free non-free-firmware"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-updates contrib main non-free non-free-firmware"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian-security ${LSB_CODENAME}-security contrib main non-free non-free-firmware"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME} contrib main non-free non-free-firmware"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-backports contrib main non-free non-free-firmware"
-        "# deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-backports-sloppy contrib main non-free non-free-firmware"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-proposed-updates contrib main non-free non-free-firmware"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/debian ${LSB_CODENAME}-updates contrib main non-free non-free-firmware"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian-security ${LSB_CODENAME}-security contrib main non-free non-free-firmware"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME} contrib main non-free non-free-firmware"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-backports contrib main non-free non-free-firmware"
+        "# deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-backports-sloppy contrib main non-free non-free-firmware"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-proposed-updates contrib main non-free non-free-firmware"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-updates contrib main non-free non-free-firmware"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian-security ${LSB_CODENAME}-security contrib main non-free non-free-firmware"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME} contrib main non-free non-free-firmware"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-backports contrib main non-free non-free-firmware"
+        "# deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-backports-sloppy contrib main non-free non-free-firmware"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-proposed-updates contrib main non-free non-free-firmware"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/debian ${LSB_CODENAME}-updates contrib main non-free non-free-firmware"
     )
     local proxmox_mirror_list=(
         "# deb ${TRANSPORT_PROTOCOL}://enterprise.proxmox.com/debian/ceph-${CEPH_CODENAME} ${LSB_CODENAME} enterprise"
         "# deb ${TRANSPORT_PROTOCOL}://enterprise.proxmox.com/debian/pve ${LSB_CODENAME} pve-enterprise"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/proxmox/debian ${LSB_CODENAME} pve-no-subscription pve-test"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/proxmox/debian/ceph-${CEPH_CODENAME} ${LSB_CODENAME} no-subscription test"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/proxmox/debian ${LSB_CODENAME} pve-no-subscription pve-test"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/proxmox/debian/ceph-${CEPH_CODENAME} ${LSB_CODENAME} no-subscription test"
     )
     mkdir -p "/etc/apt/sources.list.d"
     rm -f /etc/apt/sources.list.d/*.*
@@ -152,7 +152,7 @@ ConfigurePackages() {
         systemctl start pve-cluster
     }
     ConfigurePVEContainer() {
-        sed -Ezi.bak 's|http://download.proxmox.com|https://mirrors.cernet.edu.cn/proxmox|g' "/usr/share/perl5/PVE/APLInfo.pm"
+        sed -Ezi.bak "s|http://download.proxmox.com|https://${APT_MIRROR}/proxmox|g" "/usr/share/perl5/PVE/APLInfo.pm"
         systemctl restart pvedaemon
     }
     ConfigurePVEDashboard() {

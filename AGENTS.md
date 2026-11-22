@@ -271,7 +271,7 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 - Subscription-nag and CT-template mirror patches are fragile across PVE upgrades; re-run after updating
 
 ### Ubuntu.sh
-- APT with CERNET mirrors; Netplan for network; systemd-resolved for DNS
+- APT mirrors follow the shared `APT_MIRROR` knob (CERNET default, ubuntu/debian/proxmox trees); Netplan for network; systemd-resolved for DNS
 - XanMod kernel selection respects CPU psABI level (`PSABI_LEVEL`); amd64-only (other arches fall back to `linux-generic`), psABI v1 CPUs are forced to the `lts` branch (the only one shipping x64v1), the xanmod apt repo is only added when a xanmod kernel will actually be installed, and the default branch is `main` (edge packages have been version-identical to main since 7.3)
 - UFW firewall; `ufw --force reset/enable` to stay non-interactive
 

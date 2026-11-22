@@ -110,6 +110,7 @@ curl "https://source.zhijie.online/ZJDeploy/main/dist/Reinstall.sh" \
 | `PROXY_PROTOCOL` / `PROXY_IP` / `PROXY_PORT` / `PROXY_USERNAME` / `PROXY_PASSWORD` | proxychains 上游代理 |
 | `PROXY_URL` | `http://vpn.zhijie.online:7890` | zsh `proxy_on` 便捷代理；该域名公网解析固定为 `127.0.0.1` 回环，仅内网 DNS 给真实地址——脱离内网此默认值自动失效，公开无碍 |
 | `DEFAULT_FIRSTNAME` / `DEFAULT_LASTNAME` | `User` / `Default` | 默认用户姓名（`DEFAULT_FULLNAME` = 姓名） |
+| `APT_MIRROR` | `mirrors.cernet.edu.cn` | APT 镜像域名（Ubuntu / PVE 的 ubuntu、debian、proxmox 全部树共用）；CERNET 当前部分树 302 转发（apt 会自动跟随），需要直连源时按运行覆盖 |
 | `CUSTOM_HOSTNAME` / `CUSTOM_DOMAIN` | 自定义主机名 / 搜索域（Ubuntu / PVE），优先于自动检测与 `RESET_*`；检测不到主机名时自动生成 12 位随机 hash（如 `a3f19c02b7d4`） |
 | `ZSH_THEME` | `ys` | oh-my-zsh 主题 |
 | `CUSTOM_DNS` | 默认 `223.5.5.5 223.6.6.6 2400:3200::1 2400:3200:baba::1`（AliDNS），空格分隔，env 可覆盖 |

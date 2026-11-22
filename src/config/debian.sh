@@ -19,6 +19,10 @@ SNMP_PRIV_PASSWORD="${SNMP_PRIV_PASSWORD:-}" # empty -> hostname (warns)
 PURGE_OTHER_USERS="${PURGE_OTHER_USERS:-true}" # remove other /home users (fresh-install assumption)
 RESET_DOMAIN="${RESET_DOMAIN:-false}"
 RESET_HOSTNAME="${RESET_HOSTNAME:-false}"
+# APT mirror domain for every tree (ubuntu / debian / proxmox); CERNET by
+# default - it currently 302s some trees to third parties, which apt follows
+# transparently. Override per run when you want a direct source.
+APT_MIRROR="${APT_MIRROR:-mirrors.cernet.edu.cn}"
 CUSTOM_HOSTNAME="${CUSTOM_HOSTNAME:-}" # explicit hostname; overrides auto-detection and RESET_HOSTNAME
 CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-}" # explicit search domain(s), space-separated; overrides RESET_DOMAIN
 DISABLE_ICMP_ECHO="${DISABLE_ICMP_ECHO:-false}"

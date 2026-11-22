@@ -68,6 +68,10 @@ SNMP_PRIV_PASSWORD="${SNMP_PRIV_PASSWORD:-}" # empty -> hostname (warns)
 PURGE_OTHER_USERS="${PURGE_OTHER_USERS:-true}" # remove other /home users (fresh-install assumption)
 RESET_DOMAIN="${RESET_DOMAIN:-false}"
 RESET_HOSTNAME="${RESET_HOSTNAME:-false}"
+# APT mirror domain for every tree (ubuntu / debian / proxmox); CERNET by
+# default - it currently 302s some trees to third parties, which apt follows
+# transparently. Override per run when you want a direct source.
+APT_MIRROR="${APT_MIRROR:-mirrors.cernet.edu.cn}"
 CUSTOM_HOSTNAME="${CUSTOM_HOSTNAME:-}" # explicit hostname; overrides auto-detection and RESET_HOSTNAME
 CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-}" # explicit search domain(s), space-separated; overrides RESET_DOMAIN
 DISABLE_ICMP_ECHO="${DISABLE_ICMP_ECHO:-false}"
@@ -1910,9 +1914,9 @@ GetSystemInformation() {
                     apt_sources_file="/etc/apt/sources.list.d/ubuntu.sources"
                 fi
                 sed -i -E \
-                    -e 's/[a-z.]*archive\.ubuntu\.com/mirrors.cernet.edu.cn/g' \
-                    -e 's/[a-z.]*ports\.ubuntu\.com/mirrors.cernet.edu.cn/g' \
-                    -e 's/[a-z.]*security\.ubuntu\.com/mirrors.cernet.edu.cn/g' \
+                    -e "s/[a-z.]*archive\.ubuntu\.com/${APT_MIRROR}/g" \
+                    -e "s/[a-z.]*ports\.ubuntu\.com/${APT_MIRROR}/g" \
+                    -e "s/[a-z.]*security\.ubuntu\.com/${APT_MIRROR}/g" \
                     "$apt_sources_file"
                 RunLogged apt update
                 RunLogged apt install virt-what -qy
@@ -1953,16 +1957,16 @@ GetSystemInformation() {
 # Set Repository Mirror
 SetRepositoryMirror() {
     local mirror_list=(
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME} main multiverse restricted universe"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-backports main multiverse restricted universe"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-proposed main multiverse restricted universe"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-security main multiverse restricted universe"
-        "deb ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-updates main multiverse restricted universe"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME} main multiverse restricted universe"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-backports main multiverse restricted universe"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-proposed main multiverse restricted universe"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-security main multiverse restricted universe"
-        "deb-src ${TRANSPORT_PROTOCOL}://mirrors.cernet.edu.cn/${APT_MIRROR_REPO} ${LSB_CODENAME}-updates main multiverse restricted universe"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME} main multiverse restricted universe"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-backports main multiverse restricted universe"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-proposed main multiverse restricted universe"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-security main multiverse restricted universe"
+        "deb ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-updates main multiverse restricted universe"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME} main multiverse restricted universe"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-backports main multiverse restricted universe"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-proposed main multiverse restricted universe"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-security main multiverse restricted universe"
+        "deb-src ${TRANSPORT_PROTOCOL}://${APT_MIRROR}/${APT_MIRROR_REPO} ${LSB_CODENAME}-updates main multiverse restricted universe"
     )
     mkdir -p "/etc/apt/sources.list.d"
     rm -f /etc/apt/sources.list.d/*.*
