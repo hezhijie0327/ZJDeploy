@@ -38,19 +38,18 @@ DONE_BANNER=""
 # All installer artifacts live under one directory, matching the host
 # convention: /root/.zjdeploy/ (root's home in the alpine ram system).
 ZJDEPLOY_DIR="/root/.zjdeploy"
-# If root's home cannot be created, the failure protocol itself (log tee
-# plus the fail marker) would die silently - fall back to /tmp so the
-# protocol survives.
+# If root's home cannot be created, the failure protocol itself (the log
+# tee) would die silently - fall back to /tmp so it survives.
 mkdir -p "$ZJDEPLOY_DIR" 2> /dev/null || { ZJDEPLOY_DIR="/tmp"; mkdir -p "$ZJDEPLOY_DIR" || true; }
 LOG_FILE="${ZJDEPLOY_DIR}/installer.log"
-FAIL_FILE="${ZJDEPLOY_DIR}/installer.fail"
 
 log() {
     printf '[ZJDeploy] %s\n' "$*"
 }
 
 die() {
-    : > "$FAIL_FILE"
+    # The message lands in $LOG_FILE through the main|tee pipe; the script
+    # tail greps it back out for the exit status - one file, no marker.
     printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
     exit 1
 }
@@ -614,7 +613,9 @@ main() {
 # tee also writes /dev/console: openrc swallows service stdout, so without
 # it the install would only ever be visible in the log file.
 main 2>&1 | tee "$LOG_FILE" /dev/console
-if [ -f "$FAIL_FILE" ]; then
+# busybox ash has no PIPESTATUS; the die line itself is the status carrier
+# (captured command output never carries the [ZJDeploy] prefix).
+if grep -q '\[ZJDeploy\] ERROR:' "$LOG_FILE"; then
     exit 1
 fi
 exit 0
