@@ -17,6 +17,9 @@
 ## Resume / progress
 # State lives under the running user's home. ZJDEPLOY_FORCE=true re-runs all.
 ZJDEPLOY_STATE_DIR="${ZJDEPLOY_STATE_DIR:-${HOME}/.zjdeploy}"
+# Console verbosity: info (default) stays clean; debug also shows LogDebug
+# lines and captured command output. The run log file always records both.
+ZJDEPLOY_LOG_LEVEL="${ZJDEPLOY_LOG_LEVEL:-info}"
 ZJDEPLOY_FORCE="${ZJDEPLOY_FORCE:-false}"
 
 ## Credentials
@@ -239,6 +242,38 @@ LogInfo() {
     LogFile "$*"
 }
 
+# Detail lines: always recorded in the run log, shown on the console only
+# under ZJDEPLOY_LOG_LEVEL=debug.
+LogDebug() {
+    LogFile "DEBUG: $*"
+    if [ "${ZJDEPLOY_LOG_LEVEL:-info}" = "debug" ]; then
+        printf '[ZJDeploy] %s\n' "$*"
+    fi
+}
+
+# RunLogged
+# Runs a command with stdout+stderr captured: the console stays clean at
+# info level (the full output prints under debug), while the run log
+# always gets it indented between begin/end markers with the exit status.
+# The command's exit status propagates.
+RunLogged() {
+    local output status
+    output=$( { "$@"; } 2>&1 ) && status=0 || status=$?
+    if [ -n "${ZJDEPLOY_LOG_FILE:-}" ]; then
+        {
+            printf '    ---- begin: %s ----\n' "$*"
+            if [ -n "$output" ]; then
+                printf '%s\n' "$output" | sed 's/^/    /'
+            fi
+            printf '    ---- end: %s (exit %s) ----\n' "$*" "$status"
+        } >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+    fi
+    if [ "${ZJDEPLOY_LOG_LEVEL:-info}" = "debug" ] && [ -n "$output" ]; then
+        printf '%s\n' "$output"
+    fi
+    return "$status"
+}
+
 LogWarn() {
     printf '[ZJDeploy] WARNING: %s\n' "$*" >&2
     LogFile "WARNING: $*"
@@ -398,13 +433,17 @@ RunStep() {
     local step_id="$1"
     shift
     if [ "${ZJDEPLOY_FORCE:-false}" != "true" ] && StepDone "$step_id"; then
+        LogFile "step ${step_id}: skipped (done in a previous run)"
         LogInfo "skip ${step_id} (completed in a previous run)"
         return 0
     fi
+    local step_started
+    step_started=$(date +%s)
+    LogFile "step ${step_id}: running"
     RenderProgress "running ${step_id}"
     "$@"
     MarkStep "$step_id"
-    LogFile "done: ${step_id}"
+    LogFile "step ${step_id}: done ($(( $(date +%s) - step_started ))s)"
 }
 
 InitRun() {
@@ -835,7 +874,7 @@ InstallAptRepo() {
 }
 
 InstallAptPackages() {
-    apt update
+    RunLogged apt update
     # Filter available packages, then install them in a single apt invocation:
     # one dependency-resolution / dpkg-trigger pass instead of one per package.
     local pkg available=()
@@ -847,7 +886,7 @@ InstallAptPackages() {
         fi
     done
     if [ "${#available[@]}" -gt 0 ]; then
-        apt install -qy "${available[@]}"
+        RunLogged apt install -qy "${available[@]}"
     fi
 }
 
@@ -867,8 +906,8 @@ InstallDependencyPackages() {
                 fi
             done
             if [ "$keep" = "false" ] && dpkg -l "$agent" 2>/dev/null | grep -q '^ii'; then
-                apt purge -qy "$agent"
-                apt autoremove -qy --purge
+                RunLogged apt purge -qy "$agent"
+                RunLogged apt autoremove -qy --purge
             fi
         done
     fi
@@ -876,14 +915,14 @@ InstallDependencyPackages() {
 }
 
 UpgradePackages() {
-    apt update
-    apt full-upgrade -qy
-    apt autoremove -qy --purge
+    RunLogged apt update
+    RunLogged apt full-upgrade -qy
+    RunLogged apt autoremove -qy --purge
 }
 
 # Extra paths to remove may be passed as arguments. Never wipe all of /tmp.
 CleanupTempFiles() {
-    apt clean
+    RunLogged apt clean
     rm -f /root/.*_history /tmp/*.zjdeploy "$@"
 }
 
@@ -1804,18 +1843,18 @@ RenderAccessSummary() {
     local cred_file="${ZJDEPLOY_STATE_DIR}/credentials.txt"
     local root_pw="${ROOT_PASSWORD:-}"
     local user_pw="${DEFAULT_PASSWORD:-}"
+    local LOCK_ROOT_STATUS=""
+    if [ "${LOCK_ROOT:-false}" = "true" ]; then
+        LOCK_ROOT_STATUS=" (locked - LOCK_ROOT=true; use the sudo user)"
+    fi
     [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
     [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
     LogSeparator
     LogInfo "access summary"
     LogSeparator
     LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
-    if [ "${LOCK_ROOT:-false}" = "true" ]; then
-        LogInfo "root:   password locked (LOCK_ROOT=true)"
-    else
-        LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}"
-    fi
-    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>}"
+    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${LOCK_ROOT_STATUS}"
+    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
     LogInfo "credentials file: ${cred_file}"
     LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"
     LogSeparator

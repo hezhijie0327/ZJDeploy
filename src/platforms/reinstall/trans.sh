@@ -44,12 +44,6 @@ log() {
     printf '[ZJDeploy] %s\n' "$*"
 }
 
-# Same separator the phase-1 script prints (core.sh LogSeparator); this
-# file runs under busybox ash and cannot reuse it.
-separator() {
-    separator
-}
-
 die() {
     : > "$FAIL_FILE"
     printf '[ZJDeploy] ERROR: %s\n' "$*" >&2

@@ -219,6 +219,8 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 - `rm -f` for files; `rm -rf` only for directories
 - Cleanup removes only `*.zjdeploy` temp files, never all of `/tmp`
 - **Our deploy is authoritative**: managed config files are truncated and rewritten, and stale siblings (distro symlinks, `*.bak`, cloud-image variants) are removed - never left to coexist with ours. Re-runs must stay idempotent.
+- **Run logging**: every `Log*` line is mirrored (timestamped) into `$ZJDEPLOY_STATE_DIR/logs/<utc-timestamp>.log` - one file per run, the last 10 kept. Console verbosity follows `ZJDEPLOY_LOG_LEVEL` (`info` default stays clean; `debug` also shows `LogDebug` lines and captured command output); the log file always records everything.
+- **Traceability**: every step writes `step <id>: running|skipped|done (<seconds>s)` records into the run log, and chatty commands run through `RunLogged` so their output + exit status land between begin/end markers while the console stays clean.
 - Sensitive files 600, SSH dirs 700, private keys 400
 
 ### Gotchas

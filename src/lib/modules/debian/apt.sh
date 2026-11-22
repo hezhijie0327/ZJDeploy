@@ -63,7 +63,7 @@ InstallAptRepo() {
 }
 
 InstallAptPackages() {
-    apt update
+    RunLogged apt update
     # Filter available packages, then install them in a single apt invocation:
     # one dependency-resolution / dpkg-trigger pass instead of one per package.
     local pkg available=()
@@ -75,7 +75,7 @@ InstallAptPackages() {
         fi
     done
     if [ "${#available[@]}" -gt 0 ]; then
-        apt install -qy "${available[@]}"
+        RunLogged apt install -qy "${available[@]}"
     fi
 }
 
@@ -95,8 +95,8 @@ InstallDependencyPackages() {
                 fi
             done
             if [ "$keep" = "false" ] && dpkg -l "$agent" 2>/dev/null | grep -q '^ii'; then
-                apt purge -qy "$agent"
-                apt autoremove -qy --purge
+                RunLogged apt purge -qy "$agent"
+                RunLogged apt autoremove -qy --purge
             fi
         done
     fi
@@ -104,14 +104,14 @@ InstallDependencyPackages() {
 }
 
 UpgradePackages() {
-    apt update
-    apt full-upgrade -qy
-    apt autoremove -qy --purge
+    RunLogged apt update
+    RunLogged apt full-upgrade -qy
+    RunLogged apt autoremove -qy --purge
 }
 
 # Extra paths to remove may be passed as arguments. Never wipe all of /tmp.
 CleanupTempFiles() {
-    apt clean
+    RunLogged apt clean
     rm -f /root/.*_history /tmp/*.zjdeploy "$@"
 }
 

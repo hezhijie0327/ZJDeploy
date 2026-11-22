@@ -72,18 +72,18 @@ RenderAccessSummary() {
     local cred_file="${ZJDEPLOY_STATE_DIR}/credentials.txt"
     local root_pw="${ROOT_PASSWORD:-}"
     local user_pw="${DEFAULT_PASSWORD:-}"
+    local LOCK_ROOT_STATUS=""
+    if [ "${LOCK_ROOT:-false}" = "true" ]; then
+        LOCK_ROOT_STATUS=" (locked - LOCK_ROOT=true; use the sudo user)"
+    fi
     [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
     [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
     LogSeparator
     LogInfo "access summary"
     LogSeparator
     LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
-    if [ "${LOCK_ROOT:-false}" = "true" ]; then
-        LogInfo "root:   password locked (LOCK_ROOT=true)"
-    else
-        LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}"
-    fi
-    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>}"
+    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${LOCK_ROOT_STATUS}"
+    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
     LogInfo "credentials file: ${cred_file}"
     LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"
     LogSeparator
