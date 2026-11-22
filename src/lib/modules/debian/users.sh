@@ -76,8 +76,9 @@ RenderAccessSummary() {
     if [ "${LOCK_ROOT:-false}" = "true" ]; then
         LOCK_ROOT_STATUS=" (locked - LOCK_ROOT=true; use the sudo user)"
     fi
-    [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
-    [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
+    # || true: an empty/missing credentials.txt must not trip pipefail.
+    [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
+    [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
     LogSeparator
     LogInfo "access summary"
     LogSeparator

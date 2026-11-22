@@ -76,7 +76,11 @@ deb-src [arch=${OS_ARCHITECTURE:-amd64} signed-by=/usr/share/keyrings/crowdsec-a
 ConfigureSNMPBase() {
     HaveCommand snmpwalk || return 0
     if [ -z "${SNMP_AUTH_PASSWORD:-}" ]; then
-        SNMP_AUTH_PASSWORD="${ROOT_PASSWORD}"
+        # On a resumed run ConfigureRootUser is skipped and ROOT_PASSWORD
+        # stays empty - fall back to the persisted credential.
+        SNMP_AUTH_PASSWORD="${ROOT_PASSWORD:-}"
+        # || true: an empty/missing credentials.txt must not trip pipefail.
+        [ -n "$SNMP_AUTH_PASSWORD" ] || SNMP_AUTH_PASSWORD=$(grep -E '^ROOT_PASSWORD=' "${ZJDEPLOY_STATE_DIR}/credentials.txt" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
         LogWarn "SNMP_AUTH_PASSWORD defaults to the root password; override it via SNMP_AUTH_PASSWORD"
     fi
     if [ -z "${SNMP_PRIV_PASSWORD:-}" ]; then
