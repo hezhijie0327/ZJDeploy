@@ -99,18 +99,36 @@ ZSH_BUILD_IN_PLUGINS="${ZSH_BUILD_IN_PLUGINS:-aliases colored-man-pages command-
 
 set -Eeuo pipefail
 
+# The config block concatenates before this file and defines
+# ZJDEPLOY_STATE_DIR (~/.zjdeploy); the :- fallback is a safety net for
+# standalone sourcing (unit tests source this file directly).
+ZJDEPLOY_STATE_DIR="${ZJDEPLOY_STATE_DIR:-${HOME}/.zjdeploy}"
+
+# One structured run log per execution: every Log* line lands here
+# (timestamped) in addition to the console, under ~/.zjdeploy/logs/.
+# InitRun picks the per-run file - anything logging before InitRun stays
+# console-only.
+LogFile() {
+    [ -n "${ZJDEPLOY_LOG_FILE:-}" ] || return 0  # logging starts at InitRun
+    printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+}
+
 LogInfo() {
     printf '[ZJDeploy] %s\n' "$*"
+    LogFile "$*"
 }
 
 LogWarn() {
     printf '[ZJDeploy] WARNING: %s\n' "$*" >&2
+    LogFile "WARNING: $*"
 }
 
 Die() {
     printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
+    LogFile "ERROR: $*"
     if [ -f "$ZJDEPLOY_STATE_DIR/credentials.txt" ]; then
         printf '[ZJDeploy] NOTE: credentials minted so far are in %s\n' "$ZJDEPLOY_STATE_DIR/credentials.txt" >&2
+        LogFile "credentials minted so far are in $ZJDEPLOY_STATE_DIR/credentials.txt"
     fi
     exit 1
 }
@@ -265,19 +283,27 @@ RunStep() {
     RenderProgress "running ${step_id}"
     "$@"
     MarkStep "$step_id"
+    LogFile "done: ${step_id}"
 }
 
 InitRun() {
+    ZJDEPLOY_LOG_FILE="${ZJDEPLOY_STATE_DIR}/logs/$(date -u '+%Y%m%dT%H%M%SZ').log"
+    mkdir -p "$ZJDEPLOY_STATE_DIR/logs" 2> /dev/null || true
+    local completed_count
+    completed_count=$(StepsCompleted)
+    LogInfo "run log: ${ZJDEPLOY_LOG_FILE}"
+    LogFile "===== run started (force=${ZJDEPLOY_FORCE:-false}, ${completed_count}/${ZJDEPLOY_STEP_TOTAL} steps already complete) ====="
     if [ "${ZJDEPLOY_FORCE:-false}" = "true" ]; then
         rm -f "$(StateFile)"
         LogInfo "ZJDEPLOY_FORCE=true: re-running all steps"
-    else
-        local completed
-        completed=$(StepsCompleted)
-        if [ "$completed" -gt 0 ]; then
-            LogInfo "resuming: ${completed}/${ZJDEPLOY_STEP_TOTAL} steps already complete"
-        fi
+    elif [ "$completed_count" -gt 0 ]; then
+        LogInfo "resuming: ${completed_count}/${ZJDEPLOY_STEP_TOTAL} steps already complete"
     fi
+    # Keep the last 10 run logs.
+    ls -1t "$ZJDEPLOY_STATE_DIR/logs/" 2> /dev/null | tail -n +11 |
+        while IFS= read -r old_log; do
+            rm -f "${ZJDEPLOY_STATE_DIR}/logs/${old_log}" 2> /dev/null || true
+        done
 }
 
 trap 'Die "failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
@@ -690,9 +716,10 @@ InstallCustomPackages() {
 
 ## Process
 RequireRoot
+# Call InitRun (starts the run log first, before anything else logs)
+InitRun
 # Call GetSystemInformation (always runs: later steps need its globals)
 GetSystemInformation
-InitRun
 # Call InstallCustomPackages
 InstallCustomPackages
 # Call ConfigureSystem

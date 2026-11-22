@@ -151,7 +151,7 @@ curl "https://source.zhijie.online/ZJDeploy/main/dist/Ubuntu.sh" | sudo bash
 
 流程：脚本在本机备好 Alpine netboot 内核与安装器（写入 initramfs），注册一次性 GRUB 引导项；重启后自动分区、下载 Ubuntu 云镜像并复制安装、按原网卡 MAC 还原网络配置、写入密码 / 密钥并禁用 cloud-init。**目标磁盘会被清空**，仅支持 Ubuntu 源系统、GRUB 引导。重装完成后建议再跑一次 `dist/Ubuntu.sh` 完成完整配置。
 
-安装期间可通过 SSH（root，凭据与最终系统相同）连入安装器查看进度：日志实时写入安装器内的 `/zjdeploy.log`（失败时留有 `/zjdeploy.fail` 标记），装坏也能进 SSH 手动排查。
+安装期间可通过 SSH（root，凭据与最终系统相同）连入安装器查看进度：日志实时写入安装器内的 `/root/.zjdeploy/installer.log`（失败时留有 `/root/.zjdeploy/installer.fail` 标记），装坏也能进 SSH 手动排查。
 
 取消：重启前任何时刻跑 `REINSTALL_CANCEL=true ... Reinstall.sh` 即可撤销（清除一次性引导项与安装文件）；重启进安装器后的最初 10 秒内在**控制台**输入 `CANCEL` 也会中止并回退到原系统（此时尚未动盘），无人值守超时后自动继续。
 

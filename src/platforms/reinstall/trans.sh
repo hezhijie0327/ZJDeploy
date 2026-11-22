@@ -33,7 +33,12 @@ DONE_BANNER=""
 # The whole install runs through "main | tee" so the progress is also
 # readable over ssh. busybox ash has no PIPESTATUS and die() then only
 # exits the pipeline's subshell, so it leaves this marker for the tail.
-LOG_FILE="/zjdeploy.log"
+# All installer artifacts live under one directory, matching the host
+# convention: /root/.zjdeploy/ (root's home in the alpine ram system).
+ZJDEPLOY_DIR="/root/.zjdeploy"
+LOG_FILE="${ZJDEPLOY_DIR}/installer.log"
+FAIL_FILE="${ZJDEPLOY_DIR}/installer.fail"
+mkdir -p "$ZJDEPLOY_DIR"
 
 log() {
     printf '[ZJDeploy] %s\n' "$*"
@@ -46,7 +51,7 @@ separator() {
 }
 
 die() {
-    : > /zjdeploy.fail
+    : > "$FAIL_FILE"
     printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
     exit 1
 }
@@ -577,7 +582,7 @@ main() {
 # tee also writes /dev/console: openrc swallows service stdout, so without
 # it the install would only ever be visible in the log file.
 main 2>&1 | tee "$LOG_FILE" /dev/console
-if [ -f /zjdeploy.fail ]; then
+if [ -f "$FAIL_FILE" ]; then
     exit 1
 fi
 exit 0

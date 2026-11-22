@@ -41,6 +41,8 @@ SAFE_ENV = {
     'DOCKER_APT_DISTRO', 'FRR_APT_LINE',  # operator-overridable knobs
     # optional operator knobs - every unsafe use is behind a -n guard
     'DEFAULT_USERNAME', 'GPG_HOME_OWNER',
+    # runtime-managed internal: guarded by [ -n ... ] || return in LogFile
+    'ZJDEPLOY_LOG_FILE',
 }
 
 

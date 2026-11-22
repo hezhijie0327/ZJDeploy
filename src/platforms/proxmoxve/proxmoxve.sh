@@ -452,9 +452,10 @@ InstallCustomPackages() {
 # Set DEBIAN_FRONTEND to "noninteractive"
 export DEBIAN_FRONTEND="noninteractive"
 RequireRoot
+# Call InitRun (starts the run log first, before anything else logs)
+InitRun
 # Call GetSystemInformation (always runs: later steps need its globals)
 GetSystemInformation
-InitRun
 # Set TRANSPORT_PROTOCOL="http"; Call SetRepositoryMirror
 TRANSPORT_PROTOCOL="http"
 RunStep "SetRepositoryMirror.http" SetRepositoryMirror

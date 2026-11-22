@@ -205,9 +205,10 @@ CleanupTempFiles() {
 }
 
 ## Process
+# Call InitRun (starts the run log first, before anything else logs)
+InitRun
 # Call GetSystemInformation (always runs: later steps need its globals)
 GetSystemInformation
-InitRun
 # Call InstallDependencyPackages
 RunStep "InstallDependencyPackages" InstallDependencyPackages
 # Call UpgradePackages
