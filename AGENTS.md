@@ -116,7 +116,7 @@ Five generated scripts: platform deployments (`DSM.sh`, `macOS.sh`, `ProxmoxVE.s
 
 The `dist/*.sh` files are **generated distribution artifacts** — they are what `curl | bash` fetches. Edit the sources under `src/`, then run `./build.sh` to regenerate them. Never hand-edit the dist scripts; `lint.sh` fails if they are stale.
 
-Deployment scripts share the same phases: system information gathering → repository mirrors → dependency packages → custom packages → system configuration → package configuration → cleanup. `Reinstall.sh` has its own two-phase flow: host-side preparation (facts, credentials, Alpine netboot initramfs, one-time GRUB entry), then the actual install runs after reboot inside an Alpine RAM system (`src/platforms/reinstall/trans.sh`).
+Deployment scripts share the same phases: system information gathering → repository mirrors → dependency packages → system configuration → custom packages → package configuration → cleanup (Ubuntu/PVE create the default user in system configuration before custom packages install into its home; DSM/macOS run custom packages first). `Reinstall.sh` has its own two-phase flow: host-side preparation (facts, credentials, Alpine netboot initramfs, one-time GRUB entry), then the actual install runs after reboot inside an Alpine RAM system (`src/platforms/reinstall/trans.sh`).
 
 ## Commands
 
@@ -174,8 +174,9 @@ src/
     ├── proxmoxve/      #   config.sh + proxmoxve.sh
     └── reinstall/      #   config.sh + reinstall.sh (phase 1) + trans.sh (phase 2, busybox ash)
 build.sh                # assembles each dist/<Script>.sh from an explicit module list
-lint.sh                 # bash -n, shellcheck, step-count, build-freshness checks
+lint.sh                 # bash -n, shellcheck, step-count, dependency order, build freshness
 tests/run_tests.sh      # unit tests for the pure functions
+tests/check_dependencies.py  # static dependency-order check (lint.sh runs it)
 ```
 
 `build.sh` assembles each dist script as: license/usage header → config files (common → shared family → `src/platforms/<name>/config.sh`) → `lib/core.sh` → selected `lib/modules/*.sh` (+ `lib/modules/debian/*.sh` for Ubuntu/PVE) → `src/platforms/<name>/<name>.sh`. The Configuration block lands at the very top of the generated script so operators can tune a deployment in one place. Modules carry shared functions; platform files set the structural globals a module needs (documented above each function, e.g. `FAIL2BAN_JAILS`, `DOCKER_APT_DISTRO`, `FRR_APT_LINE`) and keep only platform-specific logic plus the `## Process` orchestration.
@@ -205,7 +206,7 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 ### Variable Naming
 - UPPERCASE_SNAKE_CASE for globals: `NEW_HOSTNAME`, `GHPROXY_URL`, `DEFAULT_USERNAME`
 - lowercase_snake_case for locals, declared with `local`
-- Every tunable is an env-overridable global: `ROOT_PASSWORD="${ROOT_PASSWORD:-R00t@123!}"`
+- Every tunable is an env-overridable global: `SSH_PORT="${SSH_PORT:-22}"`
 - Loop variables are short (`i`, `entry`, `pkg`); always quote expansions
 
 ### Error Handling
@@ -272,9 +273,9 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 - UFW firewall; `ufw --force reset/enable` to stay non-interactive
 
 ### Reinstall.sh
-- Ubuntu-only source host (needs apt + GRUB); the target disk is located by partition-table UUID and wiped on the next reboot
+- Debian-family source host (needs apt + GRUB; the check literally gates on `HaveCommand apt`); the target disk is located by partition-table UUID and wiped on the next reboot
 - Target releases are LTS-only (20.04 / 22.04 / 24.04 / 26.04), mapped to codenames in `GetUbuntuCodename`
-- Boot mode (`REINSTALL_BOOT_MODE`) defaults to following the running host; forcing `efi` from a CSM-booted host skips NVRAM registration (no efivarfs) and needs the firmware switched to UEFI by hand afterwards; the EFI bootloader is always also installed to the removable fallback path (`\EFI\BOOT\BOOTX64.EFI`) so it survives NVRAM wipes
+- Boot mode (`REINSTALL_BOOT_MODE`) defaults to following the running host; forcing `efi` from a CSM-booted host skips NVRAM registration (no efivarfs) and needs the firmware switched to UEFI by hand afterwards; the Ubuntu cloud image ships the removable fallback loader (`\EFI\BOOT\BOOTX64.EFI`), which the ESP copy preserves across NVRAM wipes
 - Phase 2 (`src/platforms/reinstall/trans.sh`) partitions the disk (ESP/bios_grub + root + trailing installer staging partition), copies the Ubuntu cloud image out of a qemu-nbd-attached qcow2 (never dd — 24.04+ images carry a separate /boot partition), and preserves the root UUID/label so baked-in grub references stay valid
 - The target root filesystem is ext4 only: the image content is copied onto a freshly formatted partition that preserves the image's UUID/label, and the ESP carries the image's own signed shim+grub (copied from the image's ESP, partition 15 on ubuntu cloud images) with a matching efibootmgr entry - mirroring the upstream reinstall project
 - All installer-phase mirrors use http, not https: the Alpine RAM system may boot with an unsynced clock, which breaks TLS certificate validation

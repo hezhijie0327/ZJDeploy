@@ -50,7 +50,7 @@ The highest-yield entry points (the grep command is the audit command):
 ## 4. Quality gates
 
 - **lint gate**: shellcheck warning-clean, dependency-order clean, step counts match, dist fresh.
-- **Function gate** (Docker): behavior reproducible in a container gets a container test — `alpine:3` for trans.sh helpers (dropbear login, mount sweep), `ubuntu:24.04` for sshd/netplan semantics (`sshd -T`, `netplan generate`).
+- **Function gate** (Docker): behavior reproducible in a container gets a container test — `alpine:latest` for trans.sh helpers (dropbear login, mount sweep), `ubuntu:latest` for sshd/netplan semantics (`sshd -T`, `netplan generate`).
 - **Real-machine gate** (Reinstall only, PVE VM): unattended run end-to-end — phase 1 stages, reboot installs, auto-reboot lands in GRUB, ssh works with the minted password. No container substitute: firmware/NVRAM/initramfs are the environment.
 - **Resume gate**: interrupt a run mid-way, re-run, verify it skips completed steps and the access summary still prints passwords (credentials.txt fallback path).
 

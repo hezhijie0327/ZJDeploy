@@ -11,7 +11,7 @@
 - **macOS.sh** - macOS（自动识别 ARM / Intel）
 - **ProxmoxVE.sh** - Proxmox VE 虚拟化平台（amd64 / arm64）
 - **Ubuntu.sh** - Ubuntu
-- **Reinstall.sh** - Ubuntu 网络重装（重启后自动完成，仅限 Ubuntu 源系统）
+- **Reinstall.sh** - Ubuntu 网络重装（重启后自动完成，Ubuntu/Debian 系源系统）
 
 ## 特性
 
@@ -24,7 +24,7 @@
 - **一键重装**：`Reinstall.sh` 备好 Alpine 安装环境与一次性 GRUB 引导项，重启即重装为全新 Ubuntu（云镜像复制安装，保留原网络配置）
 - **可重复执行**：已有密钥和配置自动备份为 `*.bak.<时间戳>`，不会直接覆盖
 - **断点续跑**：每个步骤成功后记录到 `~/.zjdeploy/state`，中断后重跑自动跳过已完成步骤；`ZJDEPLOY_FORCE=true` 全部重来
-- **进度可视**：每步打印 `[####----------------] 8/48 (16%) ConfigureChrony` 进度条
+- **进度可视**：每步打印 `[####----------------] 10/52 (19%) running ConfigureChrony` 进度条（Ubuntu 52 步 / PVE 50 步 / macOS 16 步 / DSM 10 步）
 - **顶部集中配置**：每个脚本开头是 Configuration 块，凭据 / 开关 / 网络 / 软件包列表一处可调
 - **批量装包**：依赖一次性批量安装（apt / brew），省去逐包重复解析，装机与重跑更快
 - **失败即停**：`set -Eeuo pipefail` + 行号报错，不再静默跑完一半
@@ -146,11 +146,12 @@ curl "https://source.zhijie.online/ZJDeploy/main/dist/Ubuntu.sh" | sudo bash
 | `REINSTALL_RELEASE` | `26.04` | 目标 Ubuntu **LTS** 版本（`20.04` / `22.04` / `24.04` / `26.04`） |
 | `REINSTALL_PASSWORD` | 随机生成并打印 | 新系统 root 密码；留空时若检测到本机 SSH 公钥则同时安装密钥 |
 | `REINSTALL_SSH_KEYS` | 复用本机 root 公钥 | authorized_keys 内容或文件路径 |
+| `REINSTALL_CONFHOME` | `https://source.zhijie.online/ZJDeploy/main/src/platforms/reinstall` | phase-2 安装器脚本（trans.sh）的拉取地址 |
 | `REINSTALL_INSTALLER_PART_SIZE_MB` | `2048` | 安装暂存分区大小 |
 | `REINSTALL_CANCEL` | `false` | `true` 时撤销已 staged 的重装：清除一次性 GRUB 引导项、删除安装文件并重置状态，然后退出 |
 | `REINSTALL_BOOT_MODE` | `auto` | 目标系统引导方式：`auto` 跟随源系统；`efi` / `bios` 强制指定。**BIOS 转 EFI 需固件支持 UEFI**，且 CSM 启动下安装器写不了 NVRAM，重装后需手动进固件切换 UEFI 启动 |
 
-流程：脚本在本机备好 Alpine netboot 内核与安装器（写入 initramfs），注册一次性 GRUB 引导项；重启后自动分区、下载 Ubuntu 云镜像并复制安装、按原网卡 MAC 还原网络配置、写入密码 / 密钥并禁用 cloud-init。**目标磁盘会被清空**，仅支持 Ubuntu 源系统、GRUB 引导。重装完成后建议再跑一次 `dist/Ubuntu.sh` 完成完整配置。
+流程：脚本在本机备好 Alpine netboot 内核与安装器（写入 initramfs），注册一次性 GRUB 引导项；重启后自动分区、下载 Ubuntu 云镜像并复制安装、按原网卡 MAC 还原网络配置、写入密码 / 密钥并禁用 cloud-init。**目标磁盘会被清空**，需 Ubuntu/Debian 系源系统（apt + GRUB 引导）。重装完成后建议再跑一次 `dist/Ubuntu.sh` 完成完整配置。
 
 安装期间可通过 SSH（root，凭据与最终系统相同）连入安装器查看进度：日志实时写入安装器内的 `/root/.zjdeploy/installer.log`（失败时留有 `/root/.zjdeploy/installer.fail` 标记），装坏也能进 SSH 手动排查。
 
