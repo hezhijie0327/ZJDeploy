@@ -942,8 +942,8 @@ CleanupOutageKernels() {
     if [ "${#kernel_list[@]}" -gt 0 ]; then
         # One apt pass for all outdated kernels, matching the batching in
         # InstallAptPackages.
-        apt purge -qy "${kernel_list[@]}"
-        apt autoremove -qy --purge
+        RunLogged apt purge -qy "${kernel_list[@]}"
+        RunLogged apt autoremove -qy --purge
     fi
 }
 # ============================================================================
@@ -1478,7 +1478,11 @@ deb-src [arch=${OS_ARCHITECTURE:-amd64} signed-by=/usr/share/keyrings/crowdsec-a
 ConfigureSNMPBase() {
     HaveCommand snmpwalk || return 0
     if [ -z "${SNMP_AUTH_PASSWORD:-}" ]; then
-        SNMP_AUTH_PASSWORD="${ROOT_PASSWORD}"
+        # On a resumed run ConfigureRootUser is skipped and ROOT_PASSWORD
+        # stays empty - fall back to the persisted credential.
+        SNMP_AUTH_PASSWORD="${ROOT_PASSWORD:-}"
+        # || true: an empty/missing credentials.txt must not trip pipefail.
+        [ -n "$SNMP_AUTH_PASSWORD" ] || SNMP_AUTH_PASSWORD=$(grep -E '^ROOT_PASSWORD=' "${ZJDEPLOY_STATE_DIR}/credentials.txt" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
         LogWarn "SNMP_AUTH_PASSWORD defaults to the root password; override it via SNMP_AUTH_PASSWORD"
     fi
     if [ -z "${SNMP_PRIV_PASSWORD:-}" ]; then
@@ -1847,8 +1851,9 @@ RenderAccessSummary() {
     if [ "${LOCK_ROOT:-false}" = "true" ]; then
         LOCK_ROOT_STATUS=" (locked - LOCK_ROOT=true; use the sudo user)"
     fi
-    [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
-    [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
+    # || true: an empty/missing credentials.txt must not trip pipefail.
+    [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
+    [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
     LogSeparator
     LogInfo "access summary"
     LogSeparator

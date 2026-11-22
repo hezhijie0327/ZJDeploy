@@ -132,7 +132,7 @@ InstallCustomPackages() {
             fi
         done
         if [ "${#available[@]}" -gt 0 ]; then
-            brew install --cask "${available[@]}"
+            RunLogged brew install --cask "${available[@]}"
         fi
     }
     InstallAppFromMAS() {
@@ -143,7 +143,7 @@ InstallCustomPackages() {
         for app in "${app_list[@]}"; do
             if mas info "$app" > /dev/null 2>&1; then
                 if ! mas install "$app"; then
-                    mas purchase "$app" || LogWarn "mas purchase failed for ${app}"
+                    RunLogged mas purchase "$app" || LogWarn "mas purchase failed for ${app}"
                 fi
             fi
         done
@@ -168,8 +168,8 @@ InstallDependencyPackages() {
         /bin/bash -c "$(curl -fsSL "${GHPROXY_URL:-}https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")"
     fi
     local app_list=("${BREW_PACKAGES[@]}")
-    brew developer on
-    brew update
+    RunLogged brew developer on
+    RunLogged brew update
     # Classify first, then batch-install: brew pays a Ruby startup + dependency
     # pass per invocation, so one call per kind beats one call per package.
     local app formulae=() casks=()
@@ -183,17 +183,17 @@ InstallDependencyPackages() {
         fi
     done
     if [ "${#formulae[@]}" -gt 0 ]; then
-        brew install --formula "${formulae[@]}"
+        RunLogged brew install --formula "${formulae[@]}"
     fi
     if [ "${#casks[@]}" -gt 0 ]; then
-        brew install --cask "${casks[@]}"
+        RunLogged brew install --cask "${casks[@]}"
     fi
 }
 
 # Upgrade Packages
 UpgradePackages() {
-    brew update
-    brew upgrade --greedy
+    RunLogged brew update
+    RunLogged brew upgrade --greedy
     mas upgrade || LogWarn "mas upgrade failed (sign in to the App Store first)"
     sudo softwareupdate --install --all
 }

@@ -738,7 +738,7 @@ InstallPkgPackages() {
     HaveCommand synopkg || return 0
     local pkg
     for pkg in "${PKG_PACKAGES[@]}"; do
-        if synopkg install_from_server "$pkg"; then
+        if RunLogged synopkg install_from_server "$pkg"; then
             LogInfo "package installed: ${pkg}"
         else
             LogWarn "synopkg install_from_server ${pkg} failed - check the feed or the package id"

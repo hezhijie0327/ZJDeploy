@@ -131,7 +131,7 @@ CleanupOutageKernels() {
     if [ "${#kernel_list[@]}" -gt 0 ]; then
         # One apt pass for all outdated kernels, matching the batching in
         # InstallAptPackages.
-        apt purge -qy "${kernel_list[@]}"
-        apt autoremove -qy --purge
+        RunLogged apt purge -qy "${kernel_list[@]}"
+        RunLogged apt autoremove -qy --purge
     fi
 }
