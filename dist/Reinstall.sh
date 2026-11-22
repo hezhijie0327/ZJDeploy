@@ -93,6 +93,7 @@ ZJDEPLOY_STATE_DIR="${ZJDEPLOY_STATE_DIR:-${HOME}/.zjdeploy}"
 LogFile() {
     [ -n "${ZJDEPLOY_LOG_FILE:-}" ] || return 0  # logging starts at InitRun
     printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+    chmod 600 "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
 }
 
 LogInfo() {
@@ -271,6 +272,7 @@ RunStep() {
 InitRun() {
     ZJDEPLOY_LOG_FILE="${ZJDEPLOY_STATE_DIR}/logs/$(date -u '+%Y%m%dT%H%M%SZ').log"
     mkdir -p "$ZJDEPLOY_STATE_DIR/logs" 2> /dev/null || true
+    chmod 700 "$ZJDEPLOY_STATE_DIR/logs" 2> /dev/null || true
     local completed_count
     completed_count=$(StepsCompleted)
     LogInfo "run log: ${ZJDEPLOY_LOG_FILE}"

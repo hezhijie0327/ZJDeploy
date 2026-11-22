@@ -231,6 +231,7 @@ ZJDEPLOY_STATE_DIR="${ZJDEPLOY_STATE_DIR:-${HOME}/.zjdeploy}"
 LogFile() {
     [ -n "${ZJDEPLOY_LOG_FILE:-}" ] || return 0  # logging starts at InitRun
     printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >> "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
+    chmod 600 "$ZJDEPLOY_LOG_FILE" 2> /dev/null || true
 }
 
 LogInfo() {
@@ -409,6 +410,7 @@ RunStep() {
 InitRun() {
     ZJDEPLOY_LOG_FILE="${ZJDEPLOY_STATE_DIR}/logs/$(date -u '+%Y%m%dT%H%M%SZ').log"
     mkdir -p "$ZJDEPLOY_STATE_DIR/logs" 2> /dev/null || true
+    chmod 700 "$ZJDEPLOY_STATE_DIR/logs" 2> /dev/null || true
     local completed_count
     completed_count=$(StepsCompleted)
     LogInfo "run log: ${ZJDEPLOY_LOG_FILE}"
@@ -1793,6 +1795,32 @@ ConfigureDefaultUser() {
     fi
 }
 
+# RenderAccessSummary
+# Final access summary: every managed account with its password (run
+# variables first, credentials.txt as the resume fallback) plus the ssh
+# target. Callers pass <ssh port> and <ip>.
+RenderAccessSummary() {
+    local ssh_port="$1" ip="$2"
+    local cred_file="${ZJDEPLOY_STATE_DIR}/credentials.txt"
+    local root_pw="${ROOT_PASSWORD:-}"
+    local user_pw="${DEFAULT_PASSWORD:-}"
+    [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
+    [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
+    LogSeparator
+    LogInfo "access summary"
+    LogSeparator
+    LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
+    if [ "${LOCK_ROOT:-false}" = "true" ]; then
+        LogInfo "root:   password locked (LOCK_ROOT=true)"
+    else
+        LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}"
+    fi
+    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>}"
+    LogInfo "credentials file: ${cred_file}"
+    LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"
+    LogSeparator
+}
+
 # Only the deployment user switches to zsh; system accounts keep their shells.
 ConfigureDefaultShell() {
     if HaveCommand zsh && [ -n "${DEFAULT_USERNAME:-}" ]; then
@@ -2292,4 +2320,5 @@ RunStep "CleanupTempFiles" CleanupTempFiles /etc/ufw/*."$(date '+%Y%m%d')"*
 # Call CleanupOutageKernels
 KERNEL_PATTERN='(linux-image)-[0-9].*'
 RunStep "CleanupOutageKernels" CleanupOutageKernels
+RenderAccessSummary "$SSH_PORT" "$(ip -4 route get 1.1.1.1 2> /dev/null | awk '{for (i = 1; i <= NF; i++) if ($i == "src") print $(i + 1); exit}')"
 RenderProgress "complete"

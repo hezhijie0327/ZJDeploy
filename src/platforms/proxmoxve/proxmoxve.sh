@@ -479,4 +479,5 @@ RunStep "CleanupTempFiles" CleanupTempFiles /etc/apt/sources.list.d/pve-enterpri
 # Call CleanupOutageKernels
 KERNEL_PATTERN='(pve-kernel|proxmox-kernel)-[0-9].*-pve'
 RunStep "CleanupOutageKernels" CleanupOutageKernels
+RenderAccessSummary "$SSH_PORT" "$CURRENT_MANAGEMENT_IP"
 RenderProgress "complete"

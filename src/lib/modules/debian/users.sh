@@ -63,6 +63,32 @@ ConfigureDefaultUser() {
     fi
 }
 
+# RenderAccessSummary
+# Final access summary: every managed account with its password (run
+# variables first, credentials.txt as the resume fallback) plus the ssh
+# target. Callers pass <ssh port> and <ip>.
+RenderAccessSummary() {
+    local ssh_port="$1" ip="$2"
+    local cred_file="${ZJDEPLOY_STATE_DIR}/credentials.txt"
+    local root_pw="${ROOT_PASSWORD:-}"
+    local user_pw="${DEFAULT_PASSWORD:-}"
+    [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
+    [ -n "$user_pw" ] || user_pw=$(grep -E '^DEFAULT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2-)
+    LogSeparator
+    LogInfo "access summary"
+    LogSeparator
+    LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
+    if [ "${LOCK_ROOT:-false}" = "true" ]; then
+        LogInfo "root:   password locked (LOCK_ROOT=true)"
+    else
+        LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}"
+    fi
+    LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>}"
+    LogInfo "credentials file: ${cred_file}"
+    LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"
+    LogSeparator
+}
+
 # Only the deployment user switches to zsh; system accounts keep their shells.
 ConfigureDefaultShell() {
     if HaveCommand zsh && [ -n "${DEFAULT_USERNAME:-}" ]; then

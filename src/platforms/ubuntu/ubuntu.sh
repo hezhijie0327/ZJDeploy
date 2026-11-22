@@ -474,4 +474,5 @@ RunStep "CleanupTempFiles" CleanupTempFiles /etc/ufw/*."$(date '+%Y%m%d')"*
 # Call CleanupOutageKernels
 KERNEL_PATTERN='(linux-image)-[0-9].*'
 RunStep "CleanupOutageKernels" CleanupOutageKernels
+RenderAccessSummary "$SSH_PORT" "$(ip -4 route get 1.1.1.1 2> /dev/null | awk '{for (i = 1; i <= NF; i++) if ($i == "src") print $(i + 1); exit}')"
 RenderProgress "complete"
