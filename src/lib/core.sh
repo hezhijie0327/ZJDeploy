@@ -176,24 +176,24 @@ SetGHProxyDomain() {
 # file only after it succeeds, so an interrupted run resumes at the first
 # unfinished step. ZJDEPLOY_FORCE=true clears the state and re-runs everything.
 # Platform must set: ZJDEPLOY_STATE_DIR, ZJDEPLOY_STEP_TOTAL.
-StateFile() {
+GetStateFile() {
     printf '%s/state\n' "$ZJDEPLOY_STATE_DIR"
 }
 
 StepDone() {
     local state_file
-    state_file=$(StateFile)
+    state_file=$(GetStateFile)
     [ -f "$state_file" ] && grep -qxF "$1" "$state_file"
 }
 
 MarkStep() {
     mkdir -p "$ZJDEPLOY_STATE_DIR"
-    printf '%s\n' "$1" >> "$(StateFile)"
+    printf '%s\n' "$1" >> "$(GetStateFile)"
 }
 
 StepsCompleted() {
     local state_file
-    state_file=$(StateFile)
+    state_file=$(GetStateFile)
     if [ -f "$state_file" ]; then
         wc -l < "$state_file" | tr -d ' '
     else
@@ -240,7 +240,7 @@ InitRun() {
     LogInfo "run log: ${ZJDEPLOY_LOG_FILE}"
     LogFile "===== run started (force=${ZJDEPLOY_FORCE:-false}, ${completed_count}/${ZJDEPLOY_STEP_TOTAL} steps already complete) ====="
     if [ "${ZJDEPLOY_FORCE:-false}" = "true" ]; then
-        rm -f "$(StateFile)"
+        rm -f "$(GetStateFile)"
         LogInfo "ZJDEPLOY_FORCE=true: re-running all steps"
     elif [ "$completed_count" -gt 0 ]; then
         LogInfo "resuming: ${completed_count}/${ZJDEPLOY_STEP_TOTAL} steps already complete"

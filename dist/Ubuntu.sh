@@ -391,24 +391,24 @@ SetGHProxyDomain() {
 # file only after it succeeds, so an interrupted run resumes at the first
 # unfinished step. ZJDEPLOY_FORCE=true clears the state and re-runs everything.
 # Platform must set: ZJDEPLOY_STATE_DIR, ZJDEPLOY_STEP_TOTAL.
-StateFile() {
+GetStateFile() {
     printf '%s/state\n' "$ZJDEPLOY_STATE_DIR"
 }
 
 StepDone() {
     local state_file
-    state_file=$(StateFile)
+    state_file=$(GetStateFile)
     [ -f "$state_file" ] && grep -qxF "$1" "$state_file"
 }
 
 MarkStep() {
     mkdir -p "$ZJDEPLOY_STATE_DIR"
-    printf '%s\n' "$1" >> "$(StateFile)"
+    printf '%s\n' "$1" >> "$(GetStateFile)"
 }
 
 StepsCompleted() {
     local state_file
-    state_file=$(StateFile)
+    state_file=$(GetStateFile)
     if [ -f "$state_file" ]; then
         wc -l < "$state_file" | tr -d ' '
     else
@@ -455,7 +455,7 @@ InitRun() {
     LogInfo "run log: ${ZJDEPLOY_LOG_FILE}"
     LogFile "===== run started (force=${ZJDEPLOY_FORCE:-false}, ${completed_count}/${ZJDEPLOY_STEP_TOTAL} steps already complete) ====="
     if [ "${ZJDEPLOY_FORCE:-false}" = "true" ]; then
-        rm -f "$(StateFile)"
+        rm -f "$(GetStateFile)"
         LogInfo "ZJDEPLOY_FORCE=true: re-running all steps"
     elif [ "$completed_count" -gt 0 ]; then
         LogInfo "resuming: ${completed_count}/${ZJDEPLOY_STEP_TOTAL} steps already complete"
@@ -1848,9 +1848,9 @@ RenderAccessSummary() {
     local cred_file="${ZJDEPLOY_STATE_DIR}/credentials.txt"
     local root_pw="${ROOT_PASSWORD:-}"
     local user_pw="${DEFAULT_PASSWORD:-}"
-    local LOCK_ROOT_STATUS=""
+    local lock_root_status=""
     if [ "${LOCK_ROOT:-false}" = "true" ]; then
-        LOCK_ROOT_STATUS=" (locked - LOCK_ROOT=true; use the sudo user)"
+        lock_root_status=" (locked - LOCK_ROOT=true; use the sudo user)"
     fi
     # || true: an empty/missing credentials.txt must not trip pipefail.
     [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
@@ -1859,7 +1859,7 @@ RenderAccessSummary() {
     LogInfo "access summary"
     LogSeparator
     LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
-    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${LOCK_ROOT_STATUS}"
+    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${lock_root_status}"
     LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
     LogInfo "credentials file: ${cred_file}"
     LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"

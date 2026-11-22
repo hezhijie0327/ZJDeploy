@@ -299,7 +299,7 @@ CancelReinstall() {
         grub-editenv /boot/grub/grubenv unset next_entry || true
     fi
     rm -f /boot/grub/custom.cfg /reinstall-vmlinuz /reinstall-initrd
-    rm -f "$(StateFile)"
+    rm -f "$(GetStateFile)"
     LogInfo "staged reinstall cancelled; the host boots its default entry again"
 }
 

@@ -198,6 +198,7 @@ Each orchestration leaf runs through `RunStep "<id>" <function>`. A step is appe
 - dist scripts are executable (`build.sh` sets the bit)
 - Source files are lowercase (`src/platforms/ubuntu/config.sh`, `src/platforms/ubuntu/ubuntu.sh`); generated dist scripts keep their published names (`dist/Ubuntu.sh`)
 - No `function` keyword; PascalCase verb-noun function names: `GetSystemInformation()`, `InstallCustomPackages()`
+- `src/platforms/reinstall/trans.sh` is the deliberate exception: lowercase snake_case (`partition_disk`, `chroot_configure`) marking the busybox-ash installer as a separate world
 - Platform-specific helpers are nested inside their parent function; shared helpers live in `src/lib/modules/`
 - Modules are selected per platform by the explicit file lists in `build.sh`; a module a platform uses must be listed there
 - `lib/core.sh` and `lib/modules/*.sh` must stay bash 3.2-compatible (macOS); `lib/modules/debian/*` targets bash 4.4+

@@ -72,9 +72,9 @@ RenderAccessSummary() {
     local cred_file="${ZJDEPLOY_STATE_DIR}/credentials.txt"
     local root_pw="${ROOT_PASSWORD:-}"
     local user_pw="${DEFAULT_PASSWORD:-}"
-    local LOCK_ROOT_STATUS=""
+    local lock_root_status=""
     if [ "${LOCK_ROOT:-false}" = "true" ]; then
-        LOCK_ROOT_STATUS=" (locked - LOCK_ROOT=true; use the sudo user)"
+        lock_root_status=" (locked - LOCK_ROOT=true; use the sudo user)"
     fi
     # || true: an empty/missing credentials.txt must not trip pipefail.
     [ -n "$root_pw" ] || root_pw=$(grep -E '^ROOT_PASSWORD=' "$cred_file" 2> /dev/null | tail -n 1 | cut -d '=' -f 2- || true)
@@ -83,7 +83,7 @@ RenderAccessSummary() {
     LogInfo "access summary"
     LogSeparator
     LogInfo "ssh:    ssh -p ${ssh_port} root@${ip}"
-    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${LOCK_ROOT_STATUS}"
+    LogInfo "root:   password ${root_pw:-<unknown - see ${cred_file}>}${lock_root_status}"
     LogInfo "${DEFAULT_USERNAME}: password ${user_pw:-<unknown - see ${cred_file}>} (sudo, docker)"
     LogInfo "credentials file: ${cred_file}"
     LogInfo "run logs:         ${ZJDEPLOY_STATE_DIR}/logs/"
