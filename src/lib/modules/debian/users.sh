@@ -34,6 +34,10 @@ ConfigureDefaultUser() {
     fi
     useradd -c "$DEFAULT_FULLNAME" -d "/home/${DEFAULT_USERNAME}" -s "/bin/zsh" -m "$DEFAULT_USERNAME"
     printf '%s:%s\n' "$DEFAULT_USERNAME" "$DEFAULT_PASSWORD" | chpasswd
+    # The docker group does not exist yet when ConfigureSystem runs before
+    # InstallCustomPackages (where docker is installed) - pre-create it so
+    # the group wiring succeeds in either container order.
+    getent group docker > /dev/null 2>&1 || groupadd --system docker
     adduser "$DEFAULT_USERNAME" "docker"
     adduser "$DEFAULT_USERNAME" "sudo"
     # shellcheck disable=SC2034 # consumed by InstallCrontab (modules/crontab.sh)
