@@ -36,9 +36,12 @@ DONE_BANNER=""
 # All installer artifacts live under one directory, matching the host
 # convention: /root/.zjdeploy/ (root's home in the alpine ram system).
 ZJDEPLOY_DIR="/root/.zjdeploy"
+# If root's home cannot be created, the failure protocol itself (log tee
+# plus the fail marker) would die silently - fall back to /tmp so the
+# protocol survives.
+mkdir -p "$ZJDEPLOY_DIR" 2> /dev/null || { ZJDEPLOY_DIR="/tmp"; mkdir -p "$ZJDEPLOY_DIR" || true; }
 LOG_FILE="${ZJDEPLOY_DIR}/installer.log"
 FAIL_FILE="${ZJDEPLOY_DIR}/installer.fail"
-mkdir -p "$ZJDEPLOY_DIR"
 
 log() {
     printf '[ZJDeploy] %s\n' "$*"
@@ -234,19 +237,19 @@ partition_disk() {
     # a short-option cluster and both mkpart calls died.
     disk_mib=$(( $(cat "/sys/block/${target_disk##*/}/size") * 512 / 1048576 ))
     part_end=$(( disk_mib - partsize ))
-    parted -s "$target_disk" mklabel gpt
+    parted -s "$target_disk" mklabel gpt || die "mklabel failed on ${target_disk}"
     if [ "$(get_extra efi 0)" = "1" ]; then
-        parted -s "$target_disk" mkpart esp fat32 1MiB 101MiB
-        parted -s "$target_disk" set 1 esp on
+        parted -s "$target_disk" mkpart esp fat32 1MiB 101MiB || die "mkpart esp failed"
+        parted -s "$target_disk" set 1 esp on || die "setting the esp flag failed"
         root_start="101MiB"
     else
-        parted -s "$target_disk" mkpart bios grub 1MiB 2MiB
-        parted -s "$target_disk" set 1 bios_grub on
+        parted -s "$target_disk" mkpart bios grub 1MiB 2MiB || die "mkpart bios failed"
+        parted -s "$target_disk" set 1 bios_grub on || die "setting the bios_grub flag failed"
         root_start="2MiB"
     fi
-    parted -s "$target_disk" mkpart root ext4 "$root_start" "${part_end}MiB"
-    parted -s "$target_disk" mkpart installer ext4 "${part_end}MiB" 100%
-    partprobe "$target_disk"
+    parted -s "$target_disk" mkpart root ext4 "$root_start" "${part_end}MiB" || die "mkpart root failed"
+    parted -s "$target_disk" mkpart installer ext4 "${part_end}MiB" 100% || die "mkpart installer failed"
+    partprobe "$target_disk" || die "partprobe failed on ${target_disk}"
     sleep 1
     # devtmpfs occasionally skips partition nodes after a re-scan (vda1
     # vanished while vda2/vda3 existed); mdev -s rebuilds them from sysfs.
@@ -308,9 +311,9 @@ format_and_copy() {
 
     if [ -n "$img_boot_part" ]; then
         mkdir -p /img
-        mount -o ro "$img_boot_part" /img
+        mount -o ro "$img_boot_part" /img || die "cannot mount the image boot partition"
         mkdir -p /os/boot
-        cp -a /img/. /os/boot/
+        cp -a /img/. /os/boot/ || die "boot filesystem copy failed"
         umount /img
     fi
     if [ "$(get_extra efi 0)" = "1" ]; then
@@ -330,8 +333,11 @@ format_and_copy() {
         # The image's own grub.cfg keys the root on its PARTUUID, which a
         # fresh partition table does not preserve - rewrite both copies to
         # look the root up by filesystem UUID (kept verbatim above).
+        if [ -z "$root_uuid" ]; then
+            log "WARNING: no root UUID detected - leaving the image grub.cfg untouched"
+        fi
         for cfg_dir in /os/boot/efi/EFI/ubuntu /os/boot/efi/EFI/BOOT; do
-            if [ -d "$cfg_dir" ]; then
+            if [ -n "$root_uuid" ] && [ -d "$cfg_dir" ]; then
                 printf '%s\n' \
                     "search --no-floppy --set=root --fs-uuid ${root_uuid}" \
                     "set prefix=(\$root)'/boot/grub'" \
@@ -341,8 +347,10 @@ format_and_copy() {
     fi
 
     mkdir -p /img
-    mount -o ro "$img_root_part" /img
-    cp -a /img/. /os/
+    mount -o ro "$img_root_part" /img || die "cannot mount the image root partition"
+    # The entire OS copy - a partial tree here means a silently corrupted
+    # system that still passes later checks.
+    cp -a /img/. /os/ || die "root filesystem copy failed"
     umount /img
     rm -rf /img
 }
@@ -353,14 +361,15 @@ chroot_configure() {
     arch=$(get_extra arch "amd64")
     for mount_path in dev proc sys run; do
         mkdir -p "/os/${mount_path}"
+        # Failing here only surfaces later as a misleading apt error.
         case "$mount_path" in
-            proc) mount -t proc proc "/os/${mount_path}" ;;
-            dev) mount --bind /dev "/os/${mount_path}" ;;
-            sys) mount --bind /sys "/os/${mount_path}" ;;
-            run) mount --bind /run "/os/${mount_path}" ;;
+            proc) mount -t proc proc "/os/${mount_path}" || die "cannot mount ${mount_path} into the chroot" ;;
+            dev) mount --bind /dev "/os/${mount_path}" || die "cannot mount ${mount_path} into the chroot" ;;
+            sys) mount --bind /sys "/os/${mount_path}" || die "cannot mount ${mount_path} into the chroot" ;;
+            run) mount --bind /run "/os/${mount_path}" || die "cannot mount ${mount_path} into the chroot" ;;
         esac
     done
-    cp /etc/resolv.conf /os/etc/resolv.conf
+    cp /etc/resolv.conf /os/etc/resolv.conf || die "cannot seed resolv.conf into the chroot"
 
     # CN-first apt mirrors; cloud images default to upstream.
     for sources in /os/etc/apt/sources.list /os/etc/apt/sources.list.d/*.sources /os/etc/apt/sources.list.d/*.list; do
@@ -374,7 +383,9 @@ chroot_configure() {
 
     # Credentials: hashed password and/or ssh keys baked into /configs.
     if [ -f /etc/configs/password ]; then
-        chroot /os chpasswd -e < /etc/configs/password
+        # A silent failure here forces PasswordAuthentication yes with no
+        # password set - a guaranteed lockout on key-less installs.
+        chroot /os chpasswd -e < /etc/configs/password || die "password application in the chroot failed"
         # Cloud images ship sshd_config.d snippets (60-cloudimg-settings.conf
         # sets PasswordAuthentication no); sshd keeps the first value it reads
         # and sshd_config.d is included before the main file, so the snippets
@@ -411,7 +422,7 @@ chroot_configure() {
     # disabled - install the package and create the keys right here.
     chroot /os apt-get update -qq || die "apt-get update in the chroot failed"
     chroot /os apt-get install -y openssh-server || die "openssh-server install failed"
-    chroot /os ssh-keygen -A > /dev/null
+    chroot /os ssh-keygen -A > /dev/null || die "host key generation failed"
 
     # netplan replays the previous network by MAC address.
     mkdir -p /os/etc/netplan
@@ -424,22 +435,32 @@ chroot_configure() {
     ipv4_gw=$(get_extra ipv4_gw "")
     ipv6_addr=$(get_extra ipv6 "")
     ipv6_gw=$(get_extra ipv6_gw "")
+    # Accumulate YAML blocks with real embedded newlines - $'\n' is a
+    # bashism busybox ash only supports since 1.28 and dash never does.
     if [ -n "$ipv4_addr" ]; then
-        addr_lines="${addr_lines}        - ${ipv4_addr}"$'\n'
+        addr_lines="${addr_lines}        - ${ipv4_addr}
+"
         if [ -n "$ipv4_gw" ]; then
             # on-link keeps the route usable when the gateway is outside the
             # interface subnet (VPS /32, /30); harmless when it is not.
-            route_lines="${route_lines}        - to: 0.0.0.0/0"$'\n'
-            route_lines="${route_lines}          via: ${ipv4_gw}"$'\n'
-            route_lines="${route_lines}          on-link: true"$'\n'
+            route_lines="${route_lines}        - to: 0.0.0.0/0
+"
+            route_lines="${route_lines}          via: ${ipv4_gw}
+"
+            route_lines="${route_lines}          on-link: true
+"
         fi
     fi
     if [ -n "$ipv6_addr" ]; then
-        addr_lines="${addr_lines}        - ${ipv6_addr}"$'\n'
+        addr_lines="${addr_lines}        - ${ipv6_addr}
+"
         if [ -n "$ipv6_gw" ]; then
-            route_lines="${route_lines}        - to: ::/0"$'\n'
-            route_lines="${route_lines}          via: ${ipv6_gw}"$'\n'
-            route_lines="${route_lines}          on-link: true"$'\n'
+            route_lines="${route_lines}        - to: ::/0
+"
+            route_lines="${route_lines}          via: ${ipv6_gw}
+"
+            route_lines="${route_lines}          on-link: true
+"
         fi
     fi
     {
@@ -452,12 +473,12 @@ chroot_configure() {
         printf '%s\n' "      set-name: ${mgmt_iface}"
         if [ -n "$addr_lines" ]; then
             printf '%s\n' "      dhcp4: false"
-            printf '%s' "      addresses:"$'\n'"${addr_lines}"
+            printf '      addresses:\n%s' "$addr_lines"
         else
             printf '%s\n' "      dhcp4: true"
         fi
         if [ -n "$route_lines" ]; then
-            printf '%s' "      routes:"$'\n'"${route_lines}"
+            printf '      routes:\n%s' "$route_lines"
         fi
         printf '%s\n' "      nameservers:"
         printf '%s\n' "        addresses: [$(get_extra dns "223.5.5.5,223.6.6.6")]"
@@ -499,9 +520,13 @@ chroot_configure() {
         fi
         # Belt: re-register the entry from the installer env when the
         # chroot could not (no efibootmgr inside the image).
+        case "$arch" in
+            arm64) shim_loader="\EFI\ubuntu\shimaa64.efi" ;;
+            *) shim_loader="\EFI\ubuntu\shimx64.efi" ;;
+        esac
         efibootmgr 2> /dev/null | grep -qi ubuntu || \
             efibootmgr --create --disk "$target_disk" --part 1 \
-                --label ubuntu --loader '\EFI\ubuntu\shimx64.efi' > /dev/null 2>&1 || true
+                --label ubuntu --loader "$shim_loader" > /dev/null 2>&1 || true
     else
         chroot /os grub-install --target=i386-pc --recheck "$target_disk" > /dev/null 2>&1 || die "grub-install (bios) failed"
     fi
@@ -520,8 +545,8 @@ resize_rootfs() {
     [ -n "$modloop_mount" ] && umount "$modloop_mount" 2> /dev/null || true
     losetup -D 2> /dev/null || true
 
-    parted -s "$target_disk" rm 3
-    parted -s "$target_disk" resizepart 2 100%
+    parted -s "$target_disk" rm 3 || die "removing the staging partition failed"
+    parted -s "$target_disk" resizepart 2 100% || die "growing the root partition failed"
     root_part=$(part_dev "$target_disk" 2)
     e2fsck -fp "$root_part" > /dev/null 2>&1 || true
     resize2fs "$root_part" > /dev/null 2>&1 || true
