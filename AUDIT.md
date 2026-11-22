@@ -29,7 +29,7 @@ The highest-yield entry points (the grep command is the audit command):
 | SIGPIPE traps | `grep -rn '| head' src/` — under pipefail, `find|head` and friends die 141; wrap or `|| true` with a comment |
 | Quoting | `shellcheck --severity=warning` covers it; also `grep -rn 'for .* in \$' src/` for unquoted word splits |
 | bash 3.2 compat | In `lib/core.sh` + `lib/modules/*.sh` (not `debian/`): no assoc arrays, no namerefs, no `${var,,}`, guard empty arrays with `${arr[@]+"${arr[@]}"}` |
-| busybox ash compat | `src/platforms/reinstall/trans.sh`: no arrays, no `[[`, no process substitution, no `local -a`; verify with `sh -n` (dash/ash) not just bash |
+| busybox ash compat | `src/platforms/reinstall/trans.sh`: no arrays, no `[[`, no process substitution, no `$'...'`; verify with `sh -n` **and** `dash -n` — modern alpine ash tolerates bashisms dash rejects |
 | Partitions / boot | Any change touching partition_disk/format_and_copy/chroot_configure needs a PVE VM round before merge — GRUB one-time entry, initramfs injection and netplan replay are environment-sensitive (AGENTS.md) |
 | Credential hygiene | Passwords only via `MintRandomPassword` + `RecordCredential`; never `echo`-interpolated into process lists; 0600 on credentials.txt and run logs |
 | Branding / doc rot | `grep -rn -i 'autodeploy' .` ; AGENTS.md claims vs code (names, paths, defaults); README config table vs `src/config/*` knobs |
@@ -78,6 +78,12 @@ The highest-yield entry points (the grep command is the audit command):
 | **Injection after exec** | Hooks printed after `exec switch_root` never run (exec replaces init) | Inject BEFORE the exec line; verify against the real initramfs init |
 | **Missing apk repo** | qemu-img lives in alpine community, not main | Derive the sibling community repo from the main URL |
 | **DHCP overrides collected facts** | udhcpc-first moved the installer off the expected static address | Static facts reassert first; dhcp only when no facts |
+| **Allowlisted check neutralized** | A SAFE_ENV entry silenced the exact use-before-assignment check that a real failure later proved correct | Every allowlist entry cites its guard; re-arm attempts belong in each audit round (R1 removed DOCKER_APT_DISTRO/FRR_APT_LINE) |
+| **Bare critical commands in no-set-e scripts** | trans.sh deliberately runs without set -e (die-in-pipeline cannot set exit status); new commands were added without `\|\| die` | Every installer command is either `\|\| die`, deliberate `\|\| true` with a comment, or pre-checked; R1 added 11 dies |
+| **Bashism tolerated by modern ash** | `$'\n'` works on alpine's ash ≥1.28 but breaks dash/older ash — literal `$\n` lands in the generated netplan | `dash -n` trans.sh before merge; embed real newlines or use printf |
+| **grep\|tail\|cut under pipefail** | A no-match grep returns 1 and the assignment trips the ERR trap — Die mid-summary | `\|\| true` on every fallback read of credentials.txt |
+| **Secrets in argv** | `openssl passwd "$pw"` and `snmpwalk -A` expose plaintext in /proc cmdline | stdin modes where they exist (`openssl passwd -stdin`); accepted-risk note where not (snmpwalk, localhost verification only) |
+| **World-readable staged secrets** | The initramfs carries the password hash into /tmp and / at 0644 until reboot | chmod 700/600 at creation (workdir + built image) |
 | **Slow-terminal UX reads as hang** | Silent curl/apk gave no progress for minutes | `--progress-bar` + per-file LogInfo; console mirror via `/dev/console` (openrc eats service stdout) |
 
 ## 6. Environment trap checklist
