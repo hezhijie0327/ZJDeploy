@@ -952,7 +952,7 @@ UpgradePackages() {
 
 # Cleanup Temp Files
 CleanupTempFiles() {
-    brew cleanup
+    RunLogged brew cleanup
     rm -f "/Users/${CURRENT_USERNAME}/".*_history /tmp/*.zjdeploy
 }
 

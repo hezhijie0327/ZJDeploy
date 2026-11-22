@@ -16,8 +16,8 @@ GetSystemInformation() {
                     -e 's/[a-z.]*ports\.ubuntu\.com/mirrors.cernet.edu.cn/g' \
                     -e 's/[a-z.]*security\.ubuntu\.com/mirrors.cernet.edu.cn/g' \
                     "$apt_sources_file"
-                apt update
-                apt install virt-what -qy
+                RunLogged apt update
+                RunLogged apt install virt-what -qy
                 HaveCommand virt-what || Die "virt-what has not been installed!"
             fi
             local hypervisor_environment
@@ -324,9 +324,9 @@ ConfigureSystem() {
         WriteHostfile "127.0.1.1 ${NEW_HOSTNAME}"
     }
     ConfigureLocales() {
-        apt purge -qy locales
-        apt update
-        apt install -qy locales
+        RunLogged apt purge -qy locales
+        RunLogged apt update
+        RunLogged apt install -qy locales
         locale-gen "en_US.UTF-8"
         update-locale "en_US.UTF-8"
     }

@@ -731,7 +731,7 @@ ConfigurePkgSources() {
     esac
     # Best-effort catalog refresh; otherwise Package Center fetches it on the
     # next open.
-    synopkg update > /dev/null 2>&1 || LogWarn "feed refresh deferred: open Package Center once to pick up new sources"
+    RunLogged synopkg update || LogWarn "feed refresh deferred: open Package Center once to pick up new sources"
     LogInfo "package sources merged into ${feeds_file}"
 }
 

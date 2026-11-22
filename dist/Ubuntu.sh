@@ -1056,8 +1056,8 @@ ConfigureDockerEngine() {
 InstallDockerEngine() {
     InstallAptRepo "docker" "https://mirrors.cernet.edu.cn/docker-ce/linux/${DOCKER_APT_DISTRO}/gpg" \
         "deb [arch=${OS_ARCHITECTURE:-amd64} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://mirrors.cernet.edu.cn/docker-ce/linux/${DOCKER_APT_DISTRO} ${LSB_CODENAME} stable"
-    apt update
-    apt purge -qy containerd docker-compose docker-doc docker.io podman-docker runc || true
+    RunLogged apt update
+    RunLogged apt purge -qy containerd docker-compose docker-doc docker.io podman-docker runc || true
     InstallAptPackages "containerd.io" "docker-buildx-plugin" "docker-ce" "docker-ce-cli" "docker-compose-plugin"
 }
 
@@ -1914,8 +1914,8 @@ GetSystemInformation() {
                     -e 's/[a-z.]*ports\.ubuntu\.com/mirrors.cernet.edu.cn/g' \
                     -e 's/[a-z.]*security\.ubuntu\.com/mirrors.cernet.edu.cn/g' \
                     "$apt_sources_file"
-                apt update
-                apt install virt-what -qy
+                RunLogged apt update
+                RunLogged apt install virt-what -qy
                 HaveCommand virt-what || Die "virt-what has not been installed!"
             fi
             local hypervisor_environment
@@ -2222,9 +2222,9 @@ ConfigureSystem() {
         WriteHostfile "127.0.1.1 ${NEW_HOSTNAME}"
     }
     ConfigureLocales() {
-        apt purge -qy locales
-        apt update
-        apt install -qy locales
+        RunLogged apt purge -qy locales
+        RunLogged apt update
+        RunLogged apt install -qy locales
         locale-gen "en_US.UTF-8"
         update-locale "en_US.UTF-8"
     }

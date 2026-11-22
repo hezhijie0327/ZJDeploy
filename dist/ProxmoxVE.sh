@@ -1021,8 +1021,8 @@ ConfigureDockerEngine() {
 InstallDockerEngine() {
     InstallAptRepo "docker" "https://mirrors.cernet.edu.cn/docker-ce/linux/${DOCKER_APT_DISTRO}/gpg" \
         "deb [arch=${OS_ARCHITECTURE:-amd64} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://mirrors.cernet.edu.cn/docker-ce/linux/${DOCKER_APT_DISTRO} ${LSB_CODENAME} stable"
-    apt update
-    apt purge -qy containerd docker-compose docker-doc docker.io podman-docker runc || true
+    RunLogged apt update
+    RunLogged apt purge -qy containerd docker-compose docker-doc docker.io podman-docker runc || true
     InstallAptPackages "containerd.io" "docker-buildx-plugin" "docker-ce" "docker-ce-cli" "docker-compose-plugin"
 }
 
