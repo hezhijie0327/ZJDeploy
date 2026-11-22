@@ -38,7 +38,6 @@ SAFE_ENV = {
     'HOSTNAME', 'OPTARG', 'OPTIND', 'LINENO', 'REPLY', 'IFS', 'TERM',
     'LANG', 'LC_ALL', 'SSH_CLIENT', 'SSH_TTY', 'SSH_CONNECTION',
     'DEBIAN_FRONTEND', 'ZJDEPLOY_FORCE', 'ZJDEPLOY_STATE_DIR',
-    'DOCKER_APT_DISTRO', 'FRR_APT_LINE',  # operator-overridable knobs
     # optional operator knobs - every unsafe use is behind a -n guard
     'DEFAULT_USERNAME', 'GPG_HOME_OWNER',
     # runtime-managed internal: guarded by [ -n ... ] || return in LogFile
