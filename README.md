@@ -83,7 +83,7 @@ curl "https://source.zhijie.online/ZJDeploy/main/dist/Reinstall.sh" \
 | `DISABLE_SWAP` | `false` | 不创建 swapfile（Ubuntu） |
 | `ZJDEPLOY_FORCE` | `false` | 忽略断点记录，强制重跑所有步骤 |
 | `ZJDEPLOY_STATE_DIR` | `~/.zjdeploy` | 断点续跑状态文件目录（`state`、`credentials.txt`、`logs/`） |
-| `ZJDEPLOY_LOG_LEVEL` | `info` | 控制台日志级别：`info` 简洁输出；`debug` 额外显示调试行与命令输出。运行日志文件始终记录全部内容（`logs/` 下保留最近 10 份） |
+| `ZJDEPLOY_LOG_LEVEL` | `debug` | 控制台日志级别：`debug`（默认）实时显示调试行与包管理器等命令输出；`info` 只保留步骤与警告行。运行日志文件始终记录全部内容（`logs/` 下保留最近 10 份） |
 | `XANMOD_BRANCH` | `main` | XanMod 内核分支（仅 amd64，arm64 回退 `linux-generic`）：`disable` / `main` / `edge` / `lts` / `rt`；psABI v1 老 CPU 自动引导到 `lts`（唯一提供 x64v1 的分支）。`edge` 自 7.3 起与 `main` 版本完全一致 |
 | `GHPROXY_URL` | 空 | GitHub 代理地址，可带或不带 `https://`（自动补全 scheme 与末尾斜杠） |
 | `RESET_DOMAIN` / `RESET_HOSTNAME` | `false` | 忽略检测到的搜索域 / 主机名；主机名重置后生成 12 位随机 hash（同 docker 容器 ID 风格） |

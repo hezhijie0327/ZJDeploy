@@ -18,9 +18,10 @@ ZJDEPLOY_STATE_ID="macos" # resume state namespace (injected by build.sh)
 ## Resume / progress
 # State lives under the running user's home. ZJDEPLOY_FORCE=true re-runs all.
 ZJDEPLOY_STATE_DIR="${ZJDEPLOY_STATE_DIR:-${HOME}/.zjdeploy}"
-# Console verbosity: info (default) stays clean; debug also shows LogDebug
-# lines and captured command output. The run log file always records both.
-ZJDEPLOY_LOG_LEVEL="${ZJDEPLOY_LOG_LEVEL:-info}"
+# Console verbosity: debug (default) shows everything live - LogDebug
+# lines and captured command output; info keeps the console to the
+# step/warning lines. The run log file always records both regardless.
+ZJDEPLOY_LOG_LEVEL="${ZJDEPLOY_LOG_LEVEL:-debug}"
 ZJDEPLOY_FORCE="${ZJDEPLOY_FORCE:-false}"
 
 ## Credentials
