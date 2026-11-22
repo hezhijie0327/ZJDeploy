@@ -79,10 +79,10 @@ InstallOhMyZsh() {
     )
     local omz_dir="${OMZ_HOME}/.oh-my-zsh"
     BackupPath "$omz_dir"
-    git clone --depth=1 "${GHPROXY_URL:-}https://github.com/ohmyzsh/ohmyzsh.git" "$omz_dir"
+    RunLogged git clone --depth=1 "${GHPROXY_URL:-}https://github.com/ohmyzsh/ohmyzsh.git" "$omz_dir"
     local plugin
     for plugin in "${plugin_list[@]}"; do
-        git clone --depth=1 "${GHPROXY_URL:-}https://github.com/zsh-users/${plugin}.git" "${omz_dir}/custom/plugins/${plugin}"
+        RunLogged git clone --depth=1 "${GHPROXY_URL:-}https://github.com/zsh-users/${plugin}.git" "${omz_dir}/custom/plugins/${plugin}"
     done
     # Single quotes are intentional: this script is generated, not expanded here.
     # shellcheck disable=SC2016
