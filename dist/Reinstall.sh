@@ -104,7 +104,10 @@ LogFile() {
 }
 
 LogInfo() {
-    printf '[ZJDeploy] %s\n' "$*"
+    # /dev/tty keeps console lines visible even while a step's own output
+    # is redirected into the run log; non-interactive contexts lose only
+    # the console copy (the log always has it).
+    printf '[ZJDeploy] %s\n' "$*" > /dev/tty 2> /dev/null || printf '[ZJDeploy] %s\n' "$*"
     LogFile "$*"
 }
 
@@ -127,12 +130,12 @@ RunLogged() {
 }
 
 LogWarn() {
-    printf '[ZJDeploy] WARNING: %s\n' "$*" >&2
+    printf '[ZJDeploy] WARNING: %s\n' "$*" > /dev/tty 2> /dev/null || printf '[ZJDeploy] WARNING: %s\n' "$*" >&2
     LogFile "WARNING: $*"
 }
 
 Die() {
-    printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
+    printf '[ZJDeploy] ERROR: %s\n' "$*" > /dev/tty 2> /dev/null || printf '[ZJDeploy] ERROR: %s\n' "$*" >&2
     LogFile "ERROR: $*"
     if [ -f "$ZJDEPLOY_STATE_DIR/credentials.txt" ]; then
         printf '[ZJDeploy] NOTE: credentials minted so far are in %s\n' "$ZJDEPLOY_STATE_DIR/credentials.txt" >&2
@@ -297,7 +300,13 @@ RunStep() {
     step_started=$(date +%s)
     LogFile "step ${step_id}: running"
     RenderProgress "running ${step_id}"
-    "$@"
+    # Braces (not parens): the step keeps the current shell so globals it
+    # sets survive, while ALL of its output - bare commands, forgotten
+    # captures, failure stderr - lands in the run log for audit. The
+    # console keeps only the Log* lines (they go to /dev/tty).
+    {
+        "$@"
+    } >> "${ZJDEPLOY_LOG_FILE:-/dev/null}" 2>&1
     MarkStep "$step_id"
     LogFile "step ${step_id}: done ($(( $(date +%s) - step_started ))s)"
 }
@@ -462,9 +471,9 @@ DownloadInstallerFiles() {
     ALPINE_REPO="${ALPINE_MIRROR}/latest-stable/main"
 
     LogInfo "downloading the alpine kernel (${ALPINE_FLAVOUR})"
-    curl -fL --progress-bar -o /reinstall-vmlinuz "${ALPINE_BASE}/vmlinuz-${ALPINE_FLAVOUR}"
+    curl -fL -o /reinstall-vmlinuz "${ALPINE_BASE}/vmlinuz-${ALPINE_FLAVOUR}"
     LogInfo "downloading the alpine initramfs"
-    curl -fL --progress-bar -o /reinstall-initrd "${ALPINE_BASE}/initramfs-${ALPINE_FLAVOUR}"
+    curl -fL -o /reinstall-initrd "${ALPINE_BASE}/initramfs-${ALPINE_FLAVOUR}"
     LogInfo "downloading the phase-2 installer script"
     curl -fsSL -o /reinstall-trans.sh "${REINSTALL_CONFHOME}/trans.sh"
     [ -s /reinstall-trans.sh ] || Die "failed to download the installer script from ${REINSTALL_CONFHOME}/trans.sh"

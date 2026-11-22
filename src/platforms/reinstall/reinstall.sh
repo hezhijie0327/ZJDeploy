@@ -136,9 +136,9 @@ DownloadInstallerFiles() {
     ALPINE_REPO="${ALPINE_MIRROR}/latest-stable/main"
 
     LogInfo "downloading the alpine kernel (${ALPINE_FLAVOUR})"
-    curl -fL --progress-bar -o /reinstall-vmlinuz "${ALPINE_BASE}/vmlinuz-${ALPINE_FLAVOUR}"
+    curl -fL -o /reinstall-vmlinuz "${ALPINE_BASE}/vmlinuz-${ALPINE_FLAVOUR}"
     LogInfo "downloading the alpine initramfs"
-    curl -fL --progress-bar -o /reinstall-initrd "${ALPINE_BASE}/initramfs-${ALPINE_FLAVOUR}"
+    curl -fL -o /reinstall-initrd "${ALPINE_BASE}/initramfs-${ALPINE_FLAVOUR}"
     LogInfo "downloading the phase-2 installer script"
     curl -fsSL -o /reinstall-trans.sh "${REINSTALL_CONFHOME}/trans.sh"
     [ -s /reinstall-trans.sh ] || Die "failed to download the installer script from ${REINSTALL_CONFHOME}/trans.sh"
